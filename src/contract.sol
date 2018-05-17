@@ -30,8 +30,7 @@ contract Contract is usingOraclize {
 
     function queryManufacturer(uint _quantity, uint _itemID){
         //chiamata esterna all'oracle
-        oraclize_query("URL", "https://xyz.io/queryManufacturer", '{"quantity": _quantity, "amount": "1"}');
-        oraclize_query("URL", strConcat("https://xyz.io/queryManufacturer", symbol,").result.", symbol,".c.0"));
+        oraclize_query("URL", "https://xyz.io/queryManufacturer", '{"quantity": _quantity, "itemID": _itemID}');
     }
 
     function _callbackManufacturer(uint availability, uint _price, uint _weight) external {
@@ -46,14 +45,17 @@ contract Contract is usingOraclize {
 
     function queryPayment(uint _totalPrice, uint _creditCard){
         //chiamata esterna all'oracle
+        oraclize_query("URL", "https://xyz.io/queryPayment", '{"totalPrice": _totalPrice, "creditCard": _creditCard}');
     }
 
     function queryDelivery(uint _deliveryAddress, uint _quantity, uint _totalWeight){
         //chiamata esterna all'oracle
+        oraclize_query("URL", "https://xyz.io/queryDelivery", '{"deliveryAddress": _deliveryAddress, "quantity": _quantity, "totalWeight": _totalWeight}');
     }
 
     function querySupplier(uint _quantity, uint _itemID){
         //chiamata esterna all'oracle
+        oraclize_query("URL", "https://xyz.io/querySupplier", '{"quantity": _quantity, "itemID": _itemID}');
     }
 
 }

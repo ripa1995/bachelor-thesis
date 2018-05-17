@@ -8,7 +8,7 @@ contract Contract is usingOraclize {
     uint creditCard;
     uint deliveryAddress;
     uint availability;
-    uint price;
+    uint price; // questo non ti serve 
     uint totalPrice;
     uint totalWeight;
     uint supplierPrice;
@@ -35,7 +35,7 @@ contract Contract is usingOraclize {
 
     function _callbackManufacturer(uint availability, uint _price, uint _weight) external {
         totalPrice = _price * quantity;
-        if (availability > 1){
+        if (availability = 1){
             totalWeight = quantity * _weight;
             queryPayment(totalPrice, totalWeight);
         } else {
@@ -53,7 +53,8 @@ contract Contract is usingOraclize {
         oraclize_query("URL", "https://xyz.io/queryDelivery", '{"deliveryAddress": _deliveryAddress, "quantity": _quantity, "totalWeight": _totalWeight}');
     }
 
-    function querySupplier(uint _quantity, uint _itemID){
+    function querySupplier(uint _quantity, uint _itemID){ // ti manca  totalPrice = _price * quantity; riga 18 dell'esempio
+
         //chiamata esterna all'oracle
         oraclize_query("URL", "https://xyz.io/querySupplier", '{"quantity": _quantity, "itemID": _itemID}');
     }

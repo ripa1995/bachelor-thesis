@@ -63,10 +63,12 @@ public class SmartcontractDependency {
                 //prima parola è function -> definendo una function
                 if (Utils.isQuery(token[1])) {
                     //query
+                    //TODO: separare il nome del metodo dall'inizio dei parametri
                     invokedServices.putIfAbsent(token[1],i);
                     continue;
                 } else if (Utils.isCallback(token[1])) {
                     //callback
+                    //TODO: separare il nome del metodo dall'inizio dei parametri e vedere se tra i parametri vi sono nuove variabili da aggiungere a depSC
                     invokedServices.putIfAbsent(token[1],i);
                     continue;
                 }

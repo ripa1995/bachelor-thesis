@@ -67,4 +67,17 @@ public class Utils {
         };
         return false;
     }
+
+    public static boolean isStoreKeyword(String s) {
+        if (s.equalsIgnoreCase("memory")||s.equalsIgnoreCase("storage")) {
+            //è una keyword
+
+            return true;
+        };
+        return false;
+    }
+
+    public static String removeLastChar(String s) {
+        return s.substring(0, s.length()-1);
+    }
 }

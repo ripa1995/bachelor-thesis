@@ -30,7 +30,7 @@ public class SmartcontractDependency {
         for(String st: lines)
             System.out.println(st);
         identifyVariablesAndInvokedServices();
-        /*
+
         for (String key: depSC.keySet()){
             String value = depSC.get(key).toString();
             System.out.println(key + " " + value);
@@ -38,7 +38,7 @@ public class SmartcontractDependency {
         for (String key: invokedServices.keySet()){
             String value = invokedServices.get(key).toString();
             System.out.println(key + " " + value);
-        }*/
+        }
     }
 
     public HashMap<String, Dependency> getDepSC() {
@@ -56,7 +56,11 @@ public class SmartcontractDependency {
 
             if (Utils.isType(token[0])) {
                 //la prima parola è un tipo di variabile -> definendo una variabile
-                depSC.putIfAbsent(token[1], new Dependency());
+                if (Utils.isStoreKeyword(token[1])) {
+                    depSC.putIfAbsent(Utils.removeLastChar(token[2]), new Dependency());
+                } else {
+                    depSC.putIfAbsent(Utils.removeLastChar(token[1]), new Dependency());
+                }
                 continue;
             }
             if (Utils.isFunction(token[0])) {

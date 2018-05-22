@@ -7,10 +7,8 @@ contract Contract is usingOraclize {
     uint itemID;
     uint creditCard;
     uint deliveryAddress;
-    uint availability;
     uint totalPrice;
     uint totalWeight;
-    uint supplierPrice;
 
     event queryBuyerGUIEvent(uint _quantity, uint _itemID, uint _creditCard, uint _deliveryAddress);
     event queryManufacturerEvent(uint _quantity, uint _itemID);
@@ -23,24 +21,12 @@ contract Contract is usingOraclize {
         quantity = _quantity;
         deliveryAddress = _deliveryAddress;
         itemID = _itemID;
-
         queryManufacturer(quantity, itemID);
     }
 
     function queryManufacturer(uint _quantity, uint _itemID){
         //chiamata esterna all'oracle
         oraclize_query("URL", "https://xyz.io/queryManufacturer", '{"quantity": _quantity, "itemID": _itemID}');
-    }
-
-    function _callbackManufacturer(uint availability, uint _price, uint _weight) external {
-        totalPrice = _price * quantity;
-        if (availability = 1){
-            totalWeight = quantity * _weight;
-            queryPayment(totalPrice, creditCard);
-            queryDelivery(deliveryAddress, quantity, totalWeight);
-        } else {
-            querySupplier(quantity, itemID);
-        }
     }
 
     function queryPayment(uint _totalPrice, uint _creditCard){
@@ -56,6 +42,17 @@ contract Contract is usingOraclize {
     function querySupplier(uint _quantity, uint _itemID){
         //chiamata esterna all'oracle
         oraclize_query("URL", "https://xyz.io/querySupplier", '{"quantity": _quantity, "itemID": _itemID}');
+    }
+
+    function _callbackManufacturer(uint _availability, uint _price, uint _weight) external {
+        totalPrice = _price * quantity;
+        if (_availability = 1){
+            totalWeight = quantity * _weight;
+            queryPayment(totalPrice, creditCard);
+            queryDelivery(deliveryAddress, quantity, totalWeight);
+        } else {
+            querySupplier(quantity, itemID);
+        }
     }
 
     function _callbackSupplier(uint _supplierPrice){

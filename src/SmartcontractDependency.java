@@ -26,9 +26,10 @@ public class SmartcontractDependency {
             //handle exception
             System.out.println("Exception");
         }
-        // And just to prove we have the lines right where we want them..
+        // stampa lo sc
         for(String st: lines)
             System.out.println(st);
+        //Crea gli insiemi Var (come key di depSC) e InvokedServices
         identifyVariablesAndInvokedServices();
 
         for (String key: depSC.keySet()){
@@ -37,6 +38,13 @@ public class SmartcontractDependency {
         }
         for (String key: invokedServices.keySet()){
             String value = invokedServices.get(key).toString();
+            System.out.println(key + " " + value);
+        }
+
+        identifyVariablesInitAndExploit();
+
+        for (String key: depSC.keySet()){
+            String value = depSC.get(key).getInit().getT();
             System.out.println(key + " " + value);
         }
     }
@@ -71,7 +79,8 @@ public class SmartcontractDependency {
                     continue;
                 } else if (Utils.isCallback(token[1])) {
                     //callback
-                    invokedServices.putIfAbsent(Utils.extractMethodName(token[1]),i);
+                    String methodName = Utils.extractMethodName(token[1]);
+                    invokedServices.putIfAbsent(methodName, i);
                     ArrayList<String> param = Utils.extractParam(token);
                     for(String s: param){
                         if (Utils.isType(s)) {
@@ -81,7 +90,9 @@ public class SmartcontractDependency {
                         Object o = depSC.get(s2);
                         if (o == null) {
                             //aggiungo le variabili restituite dalle callback (e quindi inizializzate ora) a depSC
-                            depSC.putIfAbsent(s, new Dependency());
+                            Dependency dependency = new Dependency();
+                            dependency.setInit(new Item(i, methodName));
+                            depSC.putIfAbsent(s, dependency);
                         }
                     }
                     continue;
@@ -92,5 +103,39 @@ public class SmartcontractDependency {
                 //serve?
             }
         }
+    }
+
+    private void identifyVariablesInitAndExploit() {
+        String s = "";
+        for(int i=0; i<lines.size(); i++) {
+            Dependency dependency = new Dependency();
+            String st = lines.get(i);
+            String[] token = st.trim().split("\\s");
+            if (Utils.isFunction(token[0])) {
+                String s1 = Utils.extractMethodName(token[1]);
+                if (invokedServices.getOrDefault(s1, 0).equals(i)) {
+                    //siamo nella loc di un servizio invocato
+                    s = s1;
+                    continue;
+                }
+            }
+
+            if (Utils.isVariableInit(depSC.keySet(), token)) {
+                System.out.println("test");
+                if (Utils.isInitByComputation(token)) {
+                    dependency = depSC.get(token[0]);
+                    dependency.setInit(new Item(i, "C"));
+                    depSC.replace(token[0], dependency);
+                } else {
+                    dependency = depSC.get(token[0]);
+                    dependency.setInit(new Item(i, s));
+                    depSC.replace(token[0], dependency);
+                }
+            }
+
+            //TODO: identificare exploit variabili
+
+        }
+
     }
 }

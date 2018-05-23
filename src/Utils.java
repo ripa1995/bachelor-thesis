@@ -1,6 +1,7 @@
 import java.io.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Set;
 
 public class Utils {
     public static boolean isType(String s){
@@ -118,7 +119,23 @@ public class Utils {
                 break;
             }
         }
-        System.out.println(arrayList.toString());
         return arrayList;
+    }
+
+    public static boolean isVariableInit(Set<String> var, String[] token) {
+        if (var.contains(token[0]) && token[1].equals("=")) {
+            //init della variabile
+            return true;
+
+        }
+        return false;
+    }
+
+    public static boolean isInitByComputation(String[] token) {
+        //vedere se è computata o ritornata da un invokedServices
+        if (token[2].startsWith("_") && token[2].endsWith(";")){
+            return false;
+        }
+        return true;
     }
 }

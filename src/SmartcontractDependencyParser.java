@@ -6,12 +6,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 
-public class SmartcontractDependency {
+public class SmartcontractDependencyParser {
     private HashMap<String, Dependency> depSC;
     private ArrayList<String> lines;
     private HashMap<String, Integer> invokedServices;
-    private ArrayList<String> testVar;
-    public SmartcontractDependency(String fileName){
+    public SmartcontractDependencyParser(String fileName){
         depSC = new HashMap<String, Dependency>();
         invokedServices = new HashMap<String, Integer>();
         File file = new File(fileName);
@@ -32,38 +31,24 @@ public class SmartcontractDependency {
             System.out.println(st);
         //Crea gli insiemi Var (come key di depSC) e InvokedServices
         identifyVariablesAndInvokedServices();
-
-        System.out.println("\nVARIABILI\n");
-        for (String key: depSC.keySet()){
-            String value = depSC.get(key).toString();
-
-            System.out.println(key + " " + value);
-        }
-        System.out.println("\nSERVIZI INVOCATI\n");
-        for (String key: invokedServices.keySet()){
-
-            String value = invokedServices.get(key).toString();
-            System.out.println(key + " " + value);
-        }
-
         identifyVariablesInitAndExploit();
+        printVarDepAndServices();
+    }
 
-        for (String key: depSC.keySet()){
-            Item i2 = depSC.get(key).getInit();
+    public ArrayList<String> getLines() {
+        return lines;
+    }
 
-            System.out.println("\nINIT DI " + key +"\n");
-            System.out.println(i2.getLoc() +" "+ i2.getT());
-        }
+    public void setLines(ArrayList<String> lines) {
+        this.lines = lines;
+    }
 
-        for (String key: depSC.keySet()){
+    public HashMap<String, Integer> getInvokedServices() {
+        return invokedServices;
+    }
 
-            ArrayList<Item> item = depSC.get(key).getExploit();
-            System.out.println("\nEXPLOIT DI " + key +"\n");
-            for (Item i2: item) {
-                System.out.println(i2.getLoc() + " "+i2.getT());
-            }
-
-        }
+    public void setInvokedServices(HashMap<String, Integer> invokedServices) {
+        this.invokedServices = invokedServices;
     }
 
     public HashMap<String, Dependency> getDepSC() {
@@ -108,7 +93,7 @@ public class SmartcontractDependency {
                         if (o == null) {
                             //aggiungo le variabili restituite dalle callback (e quindi inizializzate ora) a depSC
                             Dependency dependency = new Dependency();
-                            dependency.setInit(new Item(i, methodName));
+                            dependency.addInit(i, methodName);
                             depSC.putIfAbsent(s, dependency);
                         }
                     }
@@ -186,5 +171,30 @@ public class SmartcontractDependency {
 
         }
 
+    }
+
+    private void printVarDepAndServices(){
+        System.out.println("\nVARIABILI\n");
+        for (String key: depSC.keySet()){
+            String value = depSC.get(key).toString();
+            System.out.println(key + " " + value);
+        }
+        System.out.println("\nSERVIZI INVOCATI\n");
+        for (String key: invokedServices.keySet()){
+            String value = invokedServices.get(key).toString();
+            System.out.println(key + " " + value);
+        }
+        for (String key: depSC.keySet()){
+            ArrayList<Item> item = depSC.get(key).getInit();
+            System.out.println("\nINIT DI " + key +"\n");
+            for (Item i2: item) {
+                System.out.println(i2.getLoc() +" "+ i2.getT());
+            }
+            item = depSC.get(key).getExploit();
+            System.out.println("\nEXPLOIT DI " + key +"\n");
+            for (Item i3: item) {
+                System.out.println(i3.getLoc() + " "+i3.getT());
+            }
+        }
     }
 }

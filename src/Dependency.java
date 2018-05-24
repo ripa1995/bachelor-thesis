@@ -2,19 +2,19 @@ import java.util.ArrayList;
 
 public class Dependency {
 
-    private Item init;
+    private ArrayList<Item> init;
     private ArrayList<Item> exploit;
 
     public Dependency(){
-        init = new Item();
+        init = new ArrayList<Item>();
         exploit = new ArrayList<Item>();
     }
 
-    public Item getInit() {
+    public ArrayList<Item> getInit() {
         return init;
     }
 
-    public void setInit(Item init) {
+    public void setInit(ArrayList<Item> init) {
         this.init = init;
     }
 
@@ -31,6 +31,6 @@ public class Dependency {
     }
 
     public void addInit(int _loc, String _T) {
-        init = new Item(_loc, _T);
+        init.add(new Item(_loc, _T));
     }
 }

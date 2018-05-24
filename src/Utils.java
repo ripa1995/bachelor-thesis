@@ -133,20 +133,24 @@ public class Utils {
             return true;
 
         }
+
         return false;
     }
 
     public static boolean isInitByComputation(String[] token) {
+
         //vedere se è computata o ritornata da un invokedServices
         if (token[2].startsWith("_") && token[2].endsWith(";")){
             return false;
         }
+
         return true;
     }
 
     public static ArrayList<String> extractVariablesExploited(Set<String> var, String[] token) {
         ArrayList<String> arrayList = new ArrayList<String>();
-        for(String s: token) {
+        for(int i = 1; i<token.length; i++) {
+            String s = token[i];
             if (s.endsWith(";")) {
                 s = removeLastChar(s);
             }
@@ -166,9 +170,8 @@ public class Utils {
     }
 
     public static boolean isTestCondition(String[] token) {
-        //TODO: è possibile che sia anche in un while?
-        //if
-        if (token[0].startsWith("if")) {
+        //if for while
+        if (token[0].startsWith("if")||token[0].startsWith("for")||token[0].startsWith("while")) {
             return true;
         }
         int i = token.length;

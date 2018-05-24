@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -108,7 +109,11 @@ public class Utils {
                     arrayList.add(removeLastChar(string2));
                     flag = false;
                     break;
-                } else if (string2.endsWith("{")) {
+                } else if (string2.endsWith("){")) {
+                    arrayList.add(string2.substring(0, string2.length()-2));
+                    flag = false;
+                    break;
+                } else if (string2.endsWith(");")) {
                     arrayList.add(string2.substring(0, string2.length()-2));
                     flag = false;
                     break;
@@ -137,5 +142,78 @@ public class Utils {
             return false;
         }
         return true;
+    }
+
+    public static ArrayList<String> extractVariablesExploited(Set<String> var, String[] token) {
+        ArrayList<String> arrayList = new ArrayList<String>();
+        for(String s: token) {
+            if (s.endsWith(";")) {
+                s = removeLastChar(s);
+            }
+            if (var.contains(s)) {
+                arrayList.add(s);
+            }
+        }
+        return arrayList;
+    }
+
+    public static boolean isQueryCall(HashMap<String, Integer> invokedServices, String[] token) {
+        String s = extractMethodName(token[0]);
+        if (invokedServices.containsKey(s)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isTestCondition(String[] token) {
+        //TODO: è possibile che sia anche in un while?
+        //if
+        if (token[0].startsWith("if")) {
+            return true;
+        }
+        int i = token.length;
+        //else if ?
+        if (i>2 && (token[0].contains("else")||token[1].contains("else")) && (token[1].contains("if") || token[2].contains("if"))) {
+            return true;
+        }
+
+        return false;
+
+    }
+
+    public static ArrayList<String> extractTestVar(Set<String> strings, String[] token) {
+        ArrayList<String> arrayList = new ArrayList<String>();
+        for(String string: token) {
+            string = string.replaceAll("[^\\w\\s]"," ");
+            String[] s = string.trim().split(" ");
+            for (String string2 : s) {
+                if (string2.equals("")) {
+                    continue;
+                }
+                if (string2.equals("if")) {
+                    continue;
+                }
+                if (string2.equals("while")) {
+                    continue;
+                }
+                if (string2.contains("if")) {
+                    continue;
+                }
+                if (strings.contains(string2)) {
+                    arrayList.add(string2);
+                }
+            }
+        }
+        return arrayList;
+    }
+
+    public static boolean canSkip(String s) {
+        //TODO: ci sono altre linee da poter skippare?
+        switch (s) {
+            case "":;
+            case "pragma":;
+            case "import": return true;
+        }
+        return false;
     }
 }

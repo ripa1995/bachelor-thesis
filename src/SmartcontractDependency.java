@@ -10,6 +10,7 @@ public class SmartcontractDependency {
     private HashMap<String, Dependency> depSC;
     private ArrayList<String> lines;
     private HashMap<String, Integer> invokedServices;
+    private ArrayList<String> testVar;
     public SmartcontractDependency(String fileName){
         depSC = new HashMap<String, Dependency>();
         invokedServices = new HashMap<String, Integer>();
@@ -32,11 +33,15 @@ public class SmartcontractDependency {
         //Crea gli insiemi Var (come key di depSC) e InvokedServices
         identifyVariablesAndInvokedServices();
 
+        System.out.println("\nVARIABILI\n");
         for (String key: depSC.keySet()){
             String value = depSC.get(key).toString();
+
             System.out.println(key + " " + value);
         }
+        System.out.println("\nSERVIZI INVOCATI\n");
         for (String key: invokedServices.keySet()){
+
             String value = invokedServices.get(key).toString();
             System.out.println(key + " " + value);
         }
@@ -44,8 +49,20 @@ public class SmartcontractDependency {
         identifyVariablesInitAndExploit();
 
         for (String key: depSC.keySet()){
-            String value = depSC.get(key).getInit().getT();
-            System.out.println(key + " " + value);
+            Item i2 = depSC.get(key).getInit();
+
+            System.out.println("\nINIT DI " + key +"\n");
+            System.out.println(i2.getLoc() +" "+ i2.getT());
+        }
+
+        for (String key: depSC.keySet()){
+
+            ArrayList<Item> item = depSC.get(key).getExploit();
+            System.out.println("\nEXPLOIT DI " + key +"\n");
+            for (Item i2: item) {
+                System.out.println(i2.getLoc() + " "+i2.getT());
+            }
+
         }
     }
 
@@ -111,6 +128,9 @@ public class SmartcontractDependency {
             Dependency dependency = new Dependency();
             String st = lines.get(i);
             String[] token = st.trim().split("\\s");
+            if (Utils.canSkip(token[0])) {
+                continue;
+            }
             if (Utils.isFunction(token[0])) {
                 String s1 = Utils.extractMethodName(token[1]);
                 if (invokedServices.getOrDefault(s1, 0).equals(i)) {
@@ -121,19 +141,48 @@ public class SmartcontractDependency {
             }
 
             if (Utils.isVariableInit(depSC.keySet(), token)) {
-                System.out.println("test");
                 if (Utils.isInitByComputation(token)) {
                     dependency = depSC.get(token[0]);
-                    dependency.setInit(new Item(i, "C"));
+                    dependency.addInit(i, "C");
                     depSC.replace(token[0], dependency);
+                    //identifica le variabili utilizzate per la computazione
+                    ArrayList<String> arrayList = Utils.extractVariablesExploited(depSC.keySet(), token);
+                    for(String s1: arrayList){
+                        dependency = depSC.get(s1);
+                        dependency.addExploit(i, "C");
+                        depSC.replace(s1, dependency);
+                    }
                 } else {
                     dependency = depSC.get(token[0]);
-                    dependency.setInit(new Item(i, s));
+                    dependency.addInit(i, s);
                     depSC.replace(token[0], dependency);
                 }
+                continue;
             }
 
-            //TODO: identificare exploit variabili
+            if (Utils.isQueryCall(invokedServices, token)) {
+                ArrayList<String> param = Utils.extractParam(token);
+                for (String s1 : param) {
+                    dependency = depSC.get(s1);
+                    dependency.addExploit(i, Utils.extractMethodName(token[0]));
+                    depSC.replace(s1, dependency);
+                }
+                continue;
+            }
+
+            if (Utils.isTestCondition(token)) {
+                //TODO: identificare exploit variabili condizionali
+                ArrayList<String> testVar = Utils.extractTestVar(depSC.keySet(), token);
+                for (String s1 : testVar) {
+                    dependency = depSC.get(s1);
+                    dependency.addExploit(i,"Test");
+                    depSC.replace(s1, dependency);
+                }
+                continue;
+            }
+
+
+
 
         }
 

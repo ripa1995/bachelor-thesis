@@ -25,4 +25,12 @@ public class Dependency {
     public void setExploit(ArrayList<Item> exploit) {
         this.exploit = exploit;
     }
+
+    public void addExploit(int _loc, String _T) {
+        exploit.add(new Item(_loc, _T));
+    }
+
+    public void addInit(int _loc, String _T) {
+        init = new Item(_loc, _T);
+    }
 }

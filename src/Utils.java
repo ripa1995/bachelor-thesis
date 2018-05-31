@@ -94,6 +94,9 @@ public class Utils {
         for(String string: s) {
             String[] token = string.trim().split("\\(");
             for (String string2 : token) {
+                if(string2.equals("")) {
+                    continue;
+                }
                 if (string2.equals("function")) {
                     continue;
                 }
@@ -114,7 +117,9 @@ public class Utils {
                     flag = false;
                     break;
                 } else if (string2.endsWith(");")) {
-                    arrayList.add(string2.substring(0, string2.length()-2));
+                    String s3 = string2.substring(0, string2.length()-2);
+                    if (s3.equals("")) { continue;}
+                    arrayList.add(s3);
                     flag = false;
                     break;
                 }
@@ -218,5 +223,15 @@ public class Utils {
             case "import": return true;
         }
         return false;
+    }
+
+    public static String extractCallbackName(String s) {
+            return s.substring(9);
+
+    }
+
+    public static String extractQueryName(String s) {
+        return s.substring(5);
+
     }
 }

@@ -10,18 +10,18 @@ contract Contract is usingOraclize {
     uint totalPrice;
     uint totalWeight;
 
-    event queryBuyerGUIEvent(uint _quantity, uint _itemID, uint _creditCard, uint _deliveryAddress);
+    event queryBuyerGUIEvent();
     event queryManufacturerEvent(uint _quantity, uint _itemID);
     event queryPaymentEvent(uint _totalPrice, uint _creditCard);
     event queryDeliveryEvent(uint _deliveryAddress, uint _quantity, uint _totalWeight);
     event querySupplierEvent(uint _quantity, uint _itemID);
 
-    function queryBuyerGUI(uint _quantity, uint _itemID, uint _creditCard, uint _deliveryAddress){
-        creditCard = _creditCard;
-        quantity = _quantity;
-        deliveryAddress = _deliveryAddress;
-        itemID = _itemID;
-        queryManufacturer(quantity, itemID);
+    function main(){
+        queryBuyerGUI();
+    }
+
+    function queryBuyerGUI(){
+        //do things
     }
 
     function queryManufacturer(uint _quantity, uint _itemID){
@@ -42,6 +42,14 @@ contract Contract is usingOraclize {
     function querySupplier(uint _quantity, uint _itemID){
         //chiamata esterna all'oracle
         oraclize_query("URL", "https://xyz.io/querySupplier", '{"quantity": _quantity, "itemID": _itemID}');
+    }
+
+    function _callbackBuyerGUI(uint _quantity, uint _itemID, uint _creditCard, uint _deliveryAddress){
+        creditCard = _creditCard;
+        quantity = _quantity;
+        deliveryAddress = _deliveryAddress;
+        itemID = _itemID;
+        queryManufacturer(quantity, itemID);
     }
 
     function _callbackManufacturer(uint _availability, uint _price, uint _weight) external {

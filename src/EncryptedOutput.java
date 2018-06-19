@@ -2,16 +2,21 @@ import java.util.ArrayList;
 
 public class EncryptedOutput {
     private String varName;
-    private ArrayList<String> encValue;
+    private ArrayList<EncValue> encValue;
 
     public EncryptedOutput() {
         this.varName = "";
-        this.encValue = new ArrayList<String>();
+        this.encValue = new ArrayList<EncValue>();
     }
 
-    public EncryptedOutput(String varName, ArrayList<String> encValue) {
+    public EncryptedOutput(String varName, ArrayList<EncValue> encValue) {
         this.varName = varName;
         this.encValue = encValue;
+    }
+
+    public EncryptedOutput(String varName) {
+        this.varName = varName;
+        this.encValue = new ArrayList<EncValue>();
     }
 
     public String getVarName() {
@@ -22,15 +27,15 @@ public class EncryptedOutput {
         this.varName = varName;
     }
 
-    public ArrayList<String> getEncValue() {
+    public ArrayList<EncValue> getEncValue() {
         return encValue;
     }
 
-    public void setEncValue(ArrayList<String> encValue) {
+    public void setEncValue(ArrayList<EncValue> encValue) {
         this.encValue = encValue;
     }
 
-    public void addEncValue(String _enc) {
+    public void addEncValue(EncValue _enc) {
         if (!encValue.contains(_enc)) {
             encValue.add(_enc);
         }

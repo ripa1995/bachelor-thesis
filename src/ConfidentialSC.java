@@ -12,6 +12,8 @@ public class ConfidentialSC {
     HashMap<String, Dependency> dependencySC;
     HashMap<String, ArrayList<Header>> headers;
     HashMap<String, ArrayList<EncryptedOutput>> encryptedOutput;
+    int pos;
+
     public void init(String fileName) {
         smartcontractDependencyParser = new SmartcontractDependencyParser(fileName);
         lines = smartcontractDependencyParser.getLines();
@@ -95,8 +97,9 @@ public class ConfidentialSC {
                         break;
                     default:
                         //linea 6-10
+                        pos = 0;
                         for(Item exploit: dependency.getExploit()) {
-                            computation(exploit, dependency);
+                            computation(exploit, pos, dependency);
                         }
                         break;
                 }
@@ -105,36 +108,68 @@ public class ConfidentialSC {
         //linee 23-37
     }
 
-    public void computation(Item exploit, Dependency dependency) {
+    public void computation(Item exploit, int pos, Dependency dependency) {
         //1: switch (ei:T )
         //2: case name:
-        //      3: headerv = headerv [ name
-        //      4: CSC, line depv:init:line 􀀀 1: Insert an instruction to initialize a new
+        //      3: headerv = headerv U name
+        //      4: CSC, line depv:init:line - 1: Insert an instruction to initialize a new
         //      variable encvpos with value stored in pos-th position of v parameter returned
         //      by depv:init:T:name
         //      5: pos + +
-        //6: case CjT:
-        //      7: Let v00 2 DepSC such as depv00 :init:line == ei:line
+        //6: case C|T:
+        //      7: Let v'' appartenente DepSC such as depv'' :init:line == ei:line
         //      8: servicecount = 0
-        //      9: for all ek 2 depv00 :exploit do
-        //          10: if ek:T 2 InvokedServices then
-        //              11: headerv = headerv [ namehomomorfic
-        //              12: CSC, line depv:init:line 􀀀 1: Insert an instruction to initialize
+        //      9: for all ek appartenente depv'' :exploit do
+        //          10: if ek:T appartenente InvokedServices then
+        //              11: headerv = headerv U namehomomorfic
+        //              12: CSC, line depv:init:line - 1: Insert an instruction to initialize
         //              a new variable encvpos with value stored in pos-th position of v
         //              parameter returned by service specified in depv:init:T
         //              13: pos + +
         //              14: servicecount + +
         //              15: if servicecount > 1 then
-        //                  16: CSC, line depv:init:line􀀀1:Insert an instruction to initialize a
+        //                  16: CSC, line depv:init:line-1:Insert an instruction to initialize a
         //                  new variable vservice count with the value stored in pos-th position
         //                  of v parameter returned by service specified in depv:init:T .
-        //                  17: CSC, replace parameter v00with vservice count
+        //                  17: CSC, replace parameter v'' with vservice count
         //              18: end if
         //          19: else
         //              20: Computation(ek; headerv; c; depv00 )
         //          21: end if
         //      22: end for
         //23: end switch
+        Dependency v2 = null;
+        switch (exploit.getT()) {
+            case "C":
+            case "T":
+                //linee 6-22
+                for (Dependency dep : dependencySC.values()) {
+                    for (Item init : dep.getInit()) {
+                        if (init.getLoc() == exploit.getLoc()) {
+                            v2 = dep;
+                            break;
+                        }
+                    }
+                }
+                int serviceCount = 0;
+                for (Item exp : v2.getExploit()) {
+                    if (invokedServices.containsKey(exp.getT())) {
+                        //linea 12
+                        pos++;
+                        serviceCount++;
+                        if (serviceCount>1) {
+                            //linee 16-17
+                        }
+                    } else {
+                        computation(exp, pos, v2);
+                    }
+                }
+                break;
+            default:
+                //linea 4
+                pos++;
+                break;
+        }
     }
 
 }

@@ -234,4 +234,36 @@ public class Utils {
         return s.substring(5);
 
     }
+
+    public static String extractOperation(String s) {
+        s = s.replace("=", " ");
+        String[] strings = s.trim().split(" ");
+        //string[0] var init by C
+        for (String s1 : strings) {
+            if (s1.contains("+")) {
+                return "+";
+            }
+            if (s1.contains("-")) {
+                return "-";
+            }
+            if (s1.contains("*")) {
+                return "*";
+            }
+            if (s1.contains("/")) {
+                return "/";
+            }
+        }
+        return null;
+    }
+
+    public static ArrayList<String> extractOperators(String s) {
+        s = s.replaceAll("[^\\w\\s]"," ");
+        String[] strings = s.trim().split(" ");
+        ArrayList<String> arrayList = new ArrayList<>();
+        for (int i = 1 ; i<strings.length; i++) {
+            arrayList.add(strings[i]);
+        }
+        if (arrayList.size()>0) return arrayList;
+        return null;
+    }
 }

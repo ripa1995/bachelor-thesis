@@ -63,9 +63,49 @@ public class ConfidentialSC {
         //      35: li:parameters = li:parameters U headers
         //36: end for
         //37: end for
+        for(String dependencyVarName:dependencySC.keySet()) {
+            //linea 3-24
+            Dependency dependency = dependencySC.get(dependencyVarName);
+            for(Item item: dependency.getInit()) {
+                switch (item.getT()) {
+                    case "C":
+                        //linea 12-21
+                        String operation = Utils.extractOperation(lines.get(item.getLoc()));
+                        ArrayList<String> operators = Utils.extractOperators(lines.get(item.getLoc()));
+                        if (operation!=null) {
+                            switch (operation) {
+                                //modificare l'operazione con la corrispondente
+                                case "+":
+                                    break;
+                                case "-":
+                                    break;
+                                case "*":
+                                    break;
+                                case "/":
+                                    break;
+                            }
+                            if (operators!=null) {
+                                for (String operator: operators) {
+                                    if (!dependencySC.containsKey(operator)) {
+                                        //Crittografare l'operatore con le schema Pk
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                        //linea 6-10
+                        for(Item exploit: dependency.getExploit()) {
+                            computation(exploit, dependency);
+                        }
+                        break;
+                }
+            }
+        }
+        //linee 23-37
     }
 
-    public void computation(String exploit, Header header, int pos, Dependency dependency) {
+    public void computation(Item exploit, Dependency dependency) {
         //1: switch (ei:T )
         //2: case name:
         //      3: headerv = headerv [ name

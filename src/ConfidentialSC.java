@@ -12,6 +12,7 @@ public class ConfidentialSC {
     HashMap<String, Dependency> dependencySC;
     HashMap<String, ArrayList<Header>> headers;
     HashMap<String, ArrayList<EncryptedOutput>> encryptedOutput;
+    ArrayList<Line> newLines;
     int pos;
 
     public void init(String fileName) {
@@ -23,6 +24,7 @@ public class ConfidentialSC {
         headers = headerParser.getHeaders();
         encryptedOutputParser = new EncryptedOutputParser(headers);
         encryptedOutput = encryptedOutputParser.getCoutput();
+        newLines = new ArrayList<Line>();
     }
 
     public void encrypter() {
@@ -68,15 +70,16 @@ public class ConfidentialSC {
         for(String dependencyVarName:dependencySC.keySet()) {
             //linea 3-24
             Dependency dependency = dependencySC.get(dependencyVarName);
-            for(Item item: dependency.getInit()) {
-                switch (item.getT()) {
+            for(Item init: dependency.getInit()) {
+                switch (init.getT()) {
                     case "C":
                         //linea 12-21
-                        String operation = Utils.extractOperation(lines.get(item.getLoc()));
-                        ArrayList<String> operators = Utils.extractOperators(lines.get(item.getLoc()));
+                        String operation = Utils.extractOperation(lines.get(init.getLoc()));
+                        ArrayList<String> operators = Utils.extractOperators(lines.get(init.getLoc()));
                         if (operation!=null) {
                             switch (operation) {
                                 //modificare l'operazione con la corrispondente
+                                //TODO: generare il codice da inserire
                                 case "+":
                                     break;
                                 case "-":
@@ -90,6 +93,7 @@ public class ConfidentialSC {
                                 for (String operator: operators) {
                                     if (!dependencySC.containsKey(operator)) {
                                         //Crittografare l'operatore con le schema Pk
+                                        //TODO: generare il codice da inserire
                                     }
                                 }
                             }
@@ -99,7 +103,7 @@ public class ConfidentialSC {
                         //linea 6-10
                         pos = 0;
                         for(Item exploit: dependency.getExploit()) {
-                            computation(exploit, pos, dependency);
+                            computation(exploit, pos, init, dependency);
                         }
                         break;
                 }
@@ -108,7 +112,7 @@ public class ConfidentialSC {
         //linee 23-37
     }
 
-    public void computation(Item exploit, int pos, Dependency dependency) {
+    public void computation(Item exploit, int pos, Item init, Dependency dependency) {
         //1: switch (ei:T )
         //2: case name:
         //      3: headerv = headerv U name
@@ -144,7 +148,7 @@ public class ConfidentialSC {
             case "T":
                 //linee 6-22
                 for (Dependency dep : dependencySC.values()) {
-                    for (Item init : dep.getInit()) {
+                    for (Item init2 : dep.getInit()) {
                         if (init.getLoc() == exploit.getLoc()) {
                             v2 = dep;
                             break;
@@ -155,18 +159,33 @@ public class ConfidentialSC {
                 for (Item exp : v2.getExploit()) {
                     if (invokedServices.containsKey(exp.getT())) {
                         //linea 12
+                        //TODO: generare il codice da inserire
+                        int line = init.getLoc()-1;
+                        String code = "";
+                        Line newLine = new Line(line, code);
+                        newLines.add(newLine);
                         pos++;
                         serviceCount++;
                         if (serviceCount>1) {
                             //linee 16-17
+                            //TODO: generare il codice da inserire
+                            line = init.getLoc()-1;
+                            code = "";
+                            newLine = new Line(line, code);
+                            newLines.add(newLine);
                         }
                     } else {
-                        computation(exp, pos, v2);
+                        computation(exp, pos, init,v2);
                     }
                 }
                 break;
             default:
                 //linea 4
+                //TODO: generare il codice da inserire
+                int line = init.getLoc()-1;
+                String code = "";
+                Line newLine = new Line(line, code);
+                newLines.add(newLine);
                 pos++;
                 break;
         }

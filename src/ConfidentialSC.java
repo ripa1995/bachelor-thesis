@@ -16,6 +16,7 @@ public class ConfidentialSC {
     HashMap<String, ArrayList<EncryptedOutput>> encryptedOutput;
     ArrayList<Line> newLines;
     int pos;
+    HashMap<String, QueryDetails> queryList;
 
     public void init(String fileName) {
         smartcontractDependencyParser = new SmartcontractDependencyParser(fileName);
@@ -27,6 +28,7 @@ public class ConfidentialSC {
         encryptedOutputParser = new EncryptedOutputParser(headers);
         encryptedOutput = encryptedOutputParser.getCoutput();
         newLines = new ArrayList<Line>();
+        queryList = smartcontractDependencyParser.getQueryList();
     }
 
     public void encrypter() {
@@ -112,6 +114,14 @@ public class ConfidentialSC {
             }
         }
         //linee 23-37
+        for(String queryName:queryList.keySet()){
+            QueryDetails queryDetails = queryList.get(queryName);
+            //modifico la linea in cui viene dichiarata aggiungendo il parametro Header
+            for(int line:queryDetails.getInvocations()){
+                //alla riga - 1 crea una variabile header
+                //modfica l'invocazione aggiungendo il parametro header
+            }
+        }
     }
 
     public void computation(Item exploit, int pos, Item init, Dependency dependency) {

@@ -1,7 +1,7 @@
 pragma solidity ^0.4.0;
-import "github.com/oraclize/ethereum-api/oraclizeAPI.sol";
+import "api.sol";
 
-contract Contract is usingOraclize {
+contract Contract is usingTinyOracle {
 
     uint quantity;
     uint itemID;
@@ -26,25 +26,29 @@ contract Contract is usingOraclize {
 
     function queryManufacturer(uint _quantity, uint _itemID){
         //chiamata esterna all'oracle
-        oraclize_query("URL", "https://xyz.io/queryManufacturer", '{"quantity": _quantity, "itemID": _itemID}');
+        bytes tmp = _quantity;
+        queryTinyOracle(tmp);
     }
 
     function queryPayment(uint _totalPrice, uint _creditCard){
         //chiamata esterna all'oracle
-        oraclize_query("URL", "https://xyz.io/queryPayment", '{"totalPrice": _totalPrice, "creditCard": _creditCard}');
+        bytes tmp = _totalPrice;
+        queryTinyOracle(tmp);
     }
 
     function queryDelivery(uint _deliveryAddress, uint _quantity, uint _totalWeight){
         //chiamata esterna all'oracle
-        oraclize_query("URL", "https://xyz.io/queryDelivery", '{"deliveryAddress": _deliveryAddress, "quantity": _quantity, "totalWeight": _totalWeight}');
+        bytes tmp = _quantity;
+        queryTinyOracle(tmp);
     }
 
     function querySupplier(uint _quantity, uint _itemID){
         //chiamata esterna all'oracle
-        oraclize_query("URL", "https://xyz.io/querySupplier", '{"quantity": _quantity, "itemID": _itemID}');
+        bytes tmp = _quantity;
+        queryTinyOracle(tmp);
     }
 
-    function _callbackBuyerGUI(uint _quantity, uint _itemID, uint _creditCard, uint _deliveryAddress){
+    function _callbackBuyerGUI(uint _quantity, uint _itemID, uint _creditCard, uint _deliveryAddress) onlyFromTinyOracle external {
         creditCard = _creditCard;
         quantity = _quantity;
         deliveryAddress = _deliveryAddress;
@@ -52,7 +56,7 @@ contract Contract is usingOraclize {
         queryManufacturer(quantity, itemID);
     }
 
-    function _callbackManufacturer(uint _availability, uint _price, uint _weight) external {
+    function _callbackManufacturer(uint _availability, uint _price, uint _weight) onlyFromTinyOracle external {
         totalPrice = _price * quantity;
         if (_availability>1){
             totalWeight = quantity * _weight;
@@ -63,7 +67,7 @@ contract Contract is usingOraclize {
         }
     }
 
-    function _callbackSupplier(uint _supplierPrice){
+    function _callbackSupplier(uint _supplierPrice) onlyFromTinyOracle external {
         totalPrice = totalPrice + _supplierPrice;
         queryPayment(totalPrice, creditCard);
         queryDelivery(deliveryAddress, quantity, totalWeight);

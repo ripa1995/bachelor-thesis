@@ -10,9 +10,11 @@ public class SmartcontractDependencyParser {
     private HashMap<String, Dependency> depSC;
     private ArrayList<String> lines;
     private HashMap<String, Integer> invokedServices;
+    private HashMap<String, QueryDetails> queryList;
     public SmartcontractDependencyParser(String fileName){
         depSC = new HashMap<String, Dependency>();
         invokedServices = new HashMap<String, Integer>();
+        queryList = new HashMap<String, QueryDetails>();
         File file = new File(fileName);
         lines = new ArrayList<String>();
         try {
@@ -33,6 +35,23 @@ public class SmartcontractDependencyParser {
         identifyVariablesAndInvokedServices();
         identifyVariablesInitAndExploit();
         printVarDepAndServices();
+        printQueryList();
+    }
+
+    public HashMap<String, QueryDetails> getQueryList() {
+        return queryList;
+    }
+
+    public void setQueryList(HashMap<String, QueryDetails> queryList) {
+        this.queryList = queryList;
+    }
+
+    private void printQueryList() {
+        System.out.println("\nQUERY LIST\n");
+        for (String key: queryList.keySet()){
+            String value = queryList.get(key).toString();
+            System.out.println(key + "\n" + value +"\n");
+        }
     }
 
     public ArrayList<String> getLines() {
@@ -77,11 +96,21 @@ public class SmartcontractDependencyParser {
                 //prima parola è function -> definendo una function
                 if (Utils.isQuery(token[1])) {
                     //query
-                    invokedServices.putIfAbsent(Utils.extractMethodName(token[1]),i);
+                    String methodName = Utils.extractMethodName(token[1]);
+                    invokedServices.putIfAbsent(methodName,i);
+                    QueryDetails queryDetails = new QueryDetails();
+                    queryDetails.setDecLine(i);
+                    queryList.putIfAbsent(methodName.substring(5), queryDetails);
                     continue;
                 } else if (Utils.isCallback(token[1])) {
                     //callback
                     String methodName = Utils.extractMethodName(token[1]);
+                    String queryName = methodName.substring(9);
+                    if (queryList.containsKey(queryName)) {
+                        QueryDetails queryDetails = queryList.get(queryName);
+                        queryDetails.setCallbackLine(i);
+                        queryList.replace(queryName, queryDetails);
+                    }
                     invokedServices.putIfAbsent(methodName, i);
                     ArrayList<String> param = Utils.extractParam(token);
                     for(String s: param){
@@ -146,6 +175,12 @@ public class SmartcontractDependencyParser {
             }
 
             if (Utils.isQueryCall(invokedServices, token)) {
+                String queryName = (Utils.extractMethodName(token[0])).substring(5);
+                if (queryList.containsKey(queryName)) {
+                    QueryDetails queryDetails = queryList.get(queryName);
+                    queryDetails.addInvocationLine(i);
+                    queryList.replace(queryName, queryDetails);
+                }
                 ArrayList<String> param = Utils.extractParam(token);
                 for (String s1 : param) {
                     dependency = depSC.get(s1);

@@ -1,3 +1,5 @@
+package model;
+
 public class Line {
     private int loc;
     private String code;

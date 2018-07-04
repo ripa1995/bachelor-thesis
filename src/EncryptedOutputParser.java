@@ -1,3 +1,8 @@
+import model.DoubleEncValue;
+import model.EncValue;
+import model.EncryptedOutput;
+import model.Header;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 

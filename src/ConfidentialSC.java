@@ -115,7 +115,8 @@ public class ConfidentialSC {
                                         KeyPair keyPair = keygen.generateKeyPair();
                                         PublicKey publicKey = keyPair.getPublicKey();
                                         BigInteger ciphertext = publicKey.encrypt(BigInteger.valueOf(Long.valueOf(operator)));
-                                        linea = linea.replace(operator, ciphertext.toString());
+                                        String toBeReplaced = "\\b"+operator+"\\b";
+                                        linea = linea.replace(toBeReplaced, ciphertext.toString());
                                     }
                                 }
                             }

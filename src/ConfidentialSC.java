@@ -3,6 +3,7 @@ import util.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class ConfidentialSC {
 
@@ -17,6 +18,7 @@ public class ConfidentialSC {
     ArrayList<Line> newLines;
     int pos;
     HashMap<String, QueryDetails> queryList;
+    Dependency v3;
 
     public void init(String fileName) {
         smartcontractDependencyParser = new SmartcontractDependencyParser(fileName);
@@ -29,6 +31,7 @@ public class ConfidentialSC {
         encryptedOutput = encryptedOutputParser.getCoutput();
         newLines = new ArrayList<Line>();
         queryList = smartcontractDependencyParser.getQueryList();
+        encrypter();
     }
 
     public void encrypter() {
@@ -97,7 +100,7 @@ public class ConfidentialSC {
                                 for (String operator: operators) {
                                     if (!dependencySC.containsKey(operator)) {
                                         //Crittografare l'operatore con le schema Pk
-                                        //TODO: generare il codice da inserire
+
                                     }
                                 }
                             }
@@ -116,10 +119,22 @@ public class ConfidentialSC {
         //linee 23-37
         for(String queryName:queryList.keySet()){
             QueryDetails queryDetails = queryList.get(queryName);
-            //modifico la linea in cui viene dichiarata aggiungendo il parametro Header
-            for(int line:queryDetails.getInvocations()){
-                //alla riga - 1 crea una variabile header
-                //modfica l'invocazione aggiungendo il parametro header
+            String headerVarInit = getHeaderVarInit(queryName);
+            if (headerVarInit != null) {
+                //modifico la linea in cui viene dichiarata aggiungendo il parametro Header
+                int decLine = queryDetails.getDecLine();
+                String declaration = lines.get(decLine);
+                declaration = Utils.addHeaderParameter(declaration, ", string header");
+                lines.set(decLine, declaration);
+                for (int line : queryDetails.getInvocations()) {
+                    //alla riga - 1 crea una variabile header
+                    //modfica l'invocazione aggiungendo il parametro header
+                    Line newLine = new Line(line - 1, getHeaderVarInit(queryName));
+                    newLines.add(newLine);
+                    String invocation = lines.get(line);
+                    invocation = Utils.addHeaderParameter(invocation, ", header");
+                    lines.set(line, invocation);
+                }
             }
         }
     }
@@ -161,7 +176,7 @@ public class ConfidentialSC {
                 //linee 6-22
                 for (Dependency dep : dependencySC.values()) {
                     for (Item init2 : dep.getInit()) {
-                        if (init.getLoc() == exploit.getLoc()) {
+                        if (init2.getLoc() == exploit.getLoc()) {
                             v2 = dep;
                             break;
                         }
@@ -187,7 +202,9 @@ public class ConfidentialSC {
                             newLines.add(newLine);
                         }
                     } else {
-                        computation(exp, pos, init,v2);
+                        if (v2 != dependency) {
+                            computation(exp, pos, init, v2);
+                        }
                     }
                 }
                 break;
@@ -203,4 +220,36 @@ public class ConfidentialSC {
         }
     }
 
+    private String getHeaderVarInit(String queryName) {
+        Header header;
+        ArrayList<String> encHeader;
+        String newVar = "string header = ";
+        ArrayList<Header> headerVar = headers.get(queryName);
+        if (headerVar == null) {
+            return null;
+        }
+        int last = headerVar.size()-1;
+        for (int i = 0; i< last; i++) {
+            header = headerVar.get(i);
+            newVar = newVar + header.getVarName() + ", ";
+            encHeader = header.getEnc();
+            for (String anEncHeader : encHeader) {
+                newVar = newVar + anEncHeader + ", ";
+            }
+        }
+        header = headerVar.get(last);
+        newVar = newVar + header.getVarName();
+        encHeader = header.getEnc();
+        if (encHeader.size()==0) {
+            newVar = newVar + ";";
+        } else {
+            newVar = newVar + ", ";
+            last = encHeader.size() - 1;
+            for (int j = 0; j < last; j++) {
+                newVar = newVar + encHeader.get(j) + ", ";
+            }
+            newVar = newVar + encHeader.get(last) + ";";
+        }
+        return newVar;
+    }
 }

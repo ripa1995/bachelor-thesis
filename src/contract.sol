@@ -58,7 +58,7 @@ contract Contract is usingTinyOracle {
 
     function _callbackManufacturer(uint _availability, uint _price, uint _weight) onlyFromTinyOracle external {
         totalPrice = _price * quantity;
-        if (_availability>1){
+        if (_availability==1){
             totalWeight = quantity * _weight;
             queryPayment(totalPrice, creditCard);
             queryDelivery(deliveryAddress, quantity, totalWeight);

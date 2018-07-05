@@ -268,4 +268,15 @@ public class Utils {
         if (arrayList.size()>0) return arrayList;
         return null;
     }
+
+    public static String addHeaderParameter(String declaration, String parameter) {
+        int i = declaration.indexOf(")");
+        String prefix = declaration.substring(0,i);
+        String postfix = declaration.substring(i);
+        prefix = prefix.trim();
+        if (prefix.endsWith("(")) {
+            parameter = parameter.replace(",","");
+        }
+        return prefix + parameter + postfix;
+    }
 }

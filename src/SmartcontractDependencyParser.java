@@ -90,9 +90,9 @@ public class SmartcontractDependencyParser {
             if (Utils.isType(token[0])) {
                 //la prima parola è un tipo di variabile -> definendo una variabile
                 if (Utils.isStoreKeyword(token[1])) {
-                    depSC.putIfAbsent(Utils.removeLastChar(token[2]), new Dependency());
+                    depSC.putIfAbsent(token[2].replace(";",""), new Dependency());
                 } else {
-                    depSC.putIfAbsent(Utils.removeLastChar(token[1]), new Dependency());
+                    depSC.putIfAbsent(token[1].replace(";",""), new Dependency());
                 }
                 continue;
             }

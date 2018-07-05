@@ -263,7 +263,9 @@ public class Utils {
         String[] strings = s.trim().split(" ");
         ArrayList<String> arrayList = new ArrayList<>();
         for (int i = 1 ; i<strings.length; i++) {
-            arrayList.add(strings[i]);
+            if (!strings[i].isEmpty()) {
+                arrayList.add(strings[i]);
+            }
         }
         if (arrayList.size()>0) return arrayList;
         return null;

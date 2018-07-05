@@ -1,9 +1,11 @@
 import model.*;
 import util.Utils;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
+
+import jpaillier.*;
 
 public class ConfidentialSC {
 
@@ -81,17 +83,25 @@ public class ConfidentialSC {
                 switch (init.getT()) {
                     case "C":
                         //linea 12-21
-                        String operation = Utils.extractOperation(lines.get(init.getLoc()));
-                        ArrayList<String> operators = Utils.extractOperators(lines.get(init.getLoc()));
+                        int op = -1;
+                        String linea = lines.get(init.getLoc());
+                        String operation = Utils.extractOperation(linea);
+                        ArrayList<String> operators = Utils.extractOperators(linea);
                         if (operation!=null) {
                             switch (operation) {
                                 //modificare l'operazione con la corrispondente
                                 //TODO: generare il codice da inserire
                                 case "+":
+                                    //diventa * con paillier
+                                    linea = linea.replace("+","*");
+                                    op = 1;
                                     break;
                                 case "-":
                                     break;
                                 case "*":
+                                    //diventa ^ con paillier
+                                    linea = linea.replace("*","^");
+                                    op = 3;
                                     break;
                                 case "/":
                                     break;
@@ -100,10 +110,16 @@ public class ConfidentialSC {
                                 for (String operator: operators) {
                                     if (!dependencySC.containsKey(operator)) {
                                         //Crittografare l'operatore con le schema Pk
-
+                                        //pallier
+                                        KeyPairBuilder keygen = new KeyPairBuilder();
+                                        KeyPair keyPair = keygen.generateKeyPair();
+                                        PublicKey publicKey = keyPair.getPublicKey();
+                                        BigInteger ciphertext = publicKey.encrypt(BigInteger.valueOf(Long.valueOf(operator)));
+                                        linea = linea.replace(operator, ciphertext.toString());
                                     }
                                 }
                             }
+                            lines.set(init.getLoc(), linea);
                         }
                         break;
                     default:

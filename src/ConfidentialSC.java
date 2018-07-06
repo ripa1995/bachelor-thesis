@@ -21,6 +21,7 @@ public class ConfidentialSC {
     int pos;
     HashMap<String, QueryDetails> queryList;
     Dependency v3;
+    String varName;
 
     public void init(String fileName) {
         smartcontractDependencyParser = new SmartcontractDependencyParser(fileName);
@@ -76,8 +77,9 @@ public class ConfidentialSC {
         //      35: li:parameters = li:parameters U headers
         //36: end for
         //37: end for
-        for(String dependencyVarName:dependencySC.keySet()) {
+        for(String dependencyVarName : dependencySC.keySet()) {
             //linea 3-24
+            varName = dependencyVarName;
             Dependency dependency = dependencySC.get(dependencyVarName);
             for(Item init: dependency.getInit()) {
                 switch (init.getT()) {
@@ -90,7 +92,6 @@ public class ConfidentialSC {
                         if (operation!=null) {
                             switch (operation) {
                                 //modificare l'operazione con la corrispondente
-                                //TODO: generare il codice da inserire
                                 case "+":
                                     //diventa * con paillier
                                     linea = linea.replace("+","*");
@@ -123,11 +124,15 @@ public class ConfidentialSC {
                             lines.set(init.getLoc(), linea);
                         }
                         break;
+                    case "Test":
+                        break;
+                    case "":
+                        break;
                     default:
                         //linea 6-10
                         pos = 0;
                         for(Item exploit: dependency.getExploit()) {
-                            computation(exploit, pos, init, dependency);
+                            computation(exploit, init, dependency);
                         }
                         break;
                 }
@@ -156,7 +161,7 @@ public class ConfidentialSC {
         }
     }
 
-    public void computation(Item exploit, int pos, Item init, Dependency dependency) {
+    public void computation(Item exploit, Item init, Dependency dependency) {
         //1: switch (ei:T )
         //2: case name:
         //      3: headerv = headerv U name
@@ -189,7 +194,7 @@ public class ConfidentialSC {
         Dependency v2 = null;
         switch (exploit.getT()) {
             case "C":
-            case "T":
+            case "Test":
                 //linee 6-22
                 for (Dependency dep : dependencySC.values()) {
                     for (Item init2 : dep.getInit()) {
@@ -199,6 +204,7 @@ public class ConfidentialSC {
                         }
                     }
                 }
+                if (v2==null) break;
                 int serviceCount = 0;
                 for (Item exp : v2.getExploit()) {
                     if (invokedServices.containsKey(exp.getT())) {
@@ -220,7 +226,7 @@ public class ConfidentialSC {
                         }
                     } else {
                         if (v2 != dependency) {
-                            computation(exp, pos, init, v2);
+                            computation(exp, init, v2);
                         }
                     }
                 }
@@ -229,12 +235,62 @@ public class ConfidentialSC {
                 //linea 4
                 //TODO: generare il codice da inserire
                 int line = init.getLoc()-1;
-                String code = "";
+                //recupero il nome del parametro di output
+                String paramName = getParamNameOfCurrentVar(init);
+                if (paramName.isEmpty()) {
+                    //qualcosa è andato storto
+                    break;
+                }
+                //recupero l'enc schema della variabile nella callback di buyergui
+                ArrayList<String> encOfVar = getEncOfCurrentVar(init);
+                if (encOfVar == null) {
+                    //qualcosa è andato storto
+                    break;
+                }
+                //recupero la posizione all'interno del enc schema in base al metodo su cui ricadrà la variabile
+                int encPos = encOfVar.indexOf(exploit.getT());
+                //converto il parametro di ritorno in stringa
+                String code = "string memory " + varName + exploit.getT() + "string = toString(" + paramName + "); ";
+                //estrapolo dalla stringa ottenuta la parte di mio interesse (ipotizzo che ogni sottostringa di interesse
+                //sia lunga 77, quindi modificando la posizione di partenza in base alla posizione encPos (77*0 -> prima posizione, 77*1, ecc.)
+                code = code + "string memory " + varName + exploit.getT() + "substring = substring(" + varName + exploit.getT() +"string, " + 77 + ", " + 77*encPos + "); ";
+                //converto nuovamente la sottostringa a uint
+                code = code + "uint " + varName + exploit.getT() + " = parseInt(" + varName + exploit.getT() + "substring);";
                 Line newLine = new Line(line, code);
                 newLines.add(newLine);
+                //devo modificare la variabile passata a exploit.getT()? da es. "quantity" a "quantity"+exploit.gett()
                 pos++;
                 break;
         }
+    }
+
+    private String getParamNameOfCurrentVar(Item init) {
+        String paramName="";
+        ArrayList<String> param = Utils.extractParam(lines.get(invokedServices.get(init.getT())).split("\\s"));
+        for (int i=0; i<param.size(); i++) {
+            paramName = param.get(i);
+            if (paramName.endsWith(varName)){
+                break;
+            } else {
+                paramName = "";
+            }
+        }
+        return paramName;
+    }
+
+    private ArrayList<String> getEncOfCurrentVar(Item init) {
+        String serviceName = Utils.serviceName(init.getT());
+        ArrayList<Header> headerArrayList = headers.get(serviceName);
+        ArrayList<String> encOfVar = null;
+        for(Header header: headerArrayList) {
+            if ((header.getVarName().endsWith("_"+varName))||(header.getVarName().equals(varName))) {
+                encOfVar = header.getEnc();
+                break;
+            } else {
+                encOfVar = null;
+            }
+        }
+        return encOfVar;
     }
 
     private String getHeaderVarInit(String queryName) {

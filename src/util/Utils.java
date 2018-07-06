@@ -281,4 +281,14 @@ public class Utils {
         }
         return prefix + parameter + postfix;
     }
+
+    public static String serviceName(String t) {
+        if (isQuery(t)) {
+            return extractQueryName(t);
+        }
+        if (isCallback(t)) {
+            return extractCallbackName(t);
+        }
+        return null;
+    }
 }

@@ -144,6 +144,31 @@ public class Utils {
         return false;
     }
 
+    public static boolean isInitAsConstant(String[] token) {
+
+        //vedere se è computata o ritornata da un invokedServices
+        if (token[2].startsWith("_") && token[2].endsWith(";")){
+            return false;
+        }
+        if (token[2].endsWith(";")) {
+            token[2] = removeLastChar(token[2]);
+        }
+        Integer t = tryParse(token[2]);
+        if (t==null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static Integer tryParse(String text) {
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     public static boolean isInitByComputation(String[] token) {
 
         //vedere se è computata o ritornata da un invokedServices

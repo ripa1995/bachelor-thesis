@@ -22,6 +22,7 @@ public class ConfidentialSC {
     HashMap<String, QueryDetails> queryList;
     Dependency v3;
     String varName;
+    HashMap<String, Constant> constantHashMap;
 
     public void init(String fileName) {
         smartcontractDependencyParser = new SmartcontractDependencyParser(fileName);
@@ -34,7 +35,9 @@ public class ConfidentialSC {
         encryptedOutput = encryptedOutputParser.getCoutput();
         newLines = new ArrayList<Line>();
         queryList = smartcontractDependencyParser.getQueryList();
+        constantHashMap = smartcontractDependencyParser.getConstantHashMap();
         encrypter();
+        addFunctionToSC();
     }
 
     public void encrypter() {
@@ -93,15 +96,20 @@ public class ConfidentialSC {
                             switch (operation) {
                                 //modificare l'operazione con la corrispondente
                                 case "+":
-                                    //diventa * con paillier
-                                    linea = linea.replace("+","*");
+                                    //diventa * con paillier e con elGamal
+                                    if (true||true) {
+                                        linea = linea.replace("+", "*");
+                                    }
                                     op = 1;
                                     break;
                                 case "-":
                                     break;
                                 case "*":
                                     //diventa ^ con paillier
-                                    linea = linea.replace("*","^");
+                                    if (true) {
+                                        linea = linea.replace("*", "^");
+                                    }
+                                    //rimane * con elGamal
                                     op = 3;
                                     break;
                                 case "/":
@@ -109,15 +117,37 @@ public class ConfidentialSC {
                             }
                             if (operators!=null) {
                                 for (String operator: operators) {
-                                    if (!dependencySC.containsKey(operator)) {
-                                        //Crittografare l'operatore con le schema Pk
-                                        //pallier
+
+                                    //Crittografare l'operatore con le schema Pk
+                                    //pallier
+                                    if (constantHashMap.containsKey(operator)) {
+                                        Constant c = constantHashMap.get(operator);
+                                        String s = lines.get(c.getLoc());
+                                        KeyPairBuilder keygen = new KeyPairBuilder();
+                                        KeyPair keyPair = keygen.generateKeyPair();
+                                        PublicKey publicKey = keyPair.getPublicKey();
+                                        BigInteger ciphertext = publicKey.encrypt(BigInteger.valueOf((long) c.getValue()));
+                                        int lenght = s.length();
+                                        String toBeReplaced = c.getValue() + ";";
+                                        s = s.replace(toBeReplaced, ciphertext.toString()+";");
+                                        if (lenght==s.length()) {
+                                            toBeReplaced = "\\b" + c.getValue() + "\\b";
+                                            s = s.replace(toBeReplaced, ciphertext.toString());
+                                        }
+                                        lines.set(c.getLoc(), s);
+                                    } else if (!dependencySC.containsKey(operator)) {
                                         KeyPairBuilder keygen = new KeyPairBuilder();
                                         KeyPair keyPair = keygen.generateKeyPair();
                                         PublicKey publicKey = keyPair.getPublicKey();
                                         BigInteger ciphertext = publicKey.encrypt(BigInteger.valueOf(Long.valueOf(operator)));
-                                        String toBeReplaced = "\\b"+operator+"\\b";
-                                        linea = linea.replace(toBeReplaced, ciphertext.toString());
+
+                                        int lenght = linea.length();
+                                        String toBeReplaced = operator + ";";
+                                        linea = linea.replace(toBeReplaced, ciphertext.toString()+";");
+                                        if (lenght==linea.length()) {
+                                            toBeReplaced = "\\b" + operator + "\\b";
+                                            linea = linea.replace(toBeReplaced, ciphertext.toString());
+                                        }
                                     }
                                 }
                             }
@@ -272,7 +302,7 @@ public class ConfidentialSC {
             if (paramName.endsWith(varName)){
                 break;
             } else {
-                paramName = "";
+                paramName = varName;
             }
         }
         return paramName;
@@ -324,5 +354,49 @@ public class ConfidentialSC {
             newVar = newVar + encHeader.get(last) + ";";
         }
         return newVar;
+    }
+
+    private void addFunctionToSC(){
+        int i = lines.lastIndexOf("}");
+        String function = "function parseInt(string _value) public returns (uint _ret) {\n" +
+                "bytes memory _bytesValue = bytes(_value);\n" +
+                "uint j = 1;\n" +
+                "for (uint i = _bytesValue.length -1; i>=0 && i<_bytesValue.length; i--){\n" +
+                "assert(_bytesValue[i] >= 48 && _bytesValue[i]<=57);\n" +
+                "_ret +=(uint(_bytesValue[i])-48)*j;\n" +
+                "j*=10;\n" +
+                "}\n" +
+                "}\n" +
+                "\n" +
+                "function substring(string _base, uint _length, uint _offset) internal returns (string) {\n" +
+                "    bytes memory _baseBytes = bytes(_base);\n" +
+                "assert(uint(_offset+_length)<=_baseBytes.length);\n" +
+                "string memory _tmp = new string(uint(_length));\n" +
+                "    bytes memory _tmpBytes = bytes(_tmp);\n" +
+                "uint j=0;\n" +
+                "    for(uint i = uint(_offset); i < uint(_offset+_length); i++) {\n" +
+                "        _tmpBytes[j++] = _baseBytes[i];\n" +
+                "    }\n" +
+                "    return string(_tmpBytes);\n" +
+                "}\n" +
+                "\n" +
+                "function toString(uint _base) internal returns (string) {\n" +
+                "bytes memory _tmp = new bytes(32);\n" +
+                "uint i;\n" +
+                "for (i=0;_base>0;i++) {\n" +
+                "_tmp[i] = byte((_base%10)+48);\n" +
+                "_base /= 10;\n" +
+                "}\n" +
+                "bytes memory _real = new bytes(i--);\n" +
+                "for (uint j = 0; j<_real.length; j++) {\n" +
+                "_real[j] = _tmp[i--];\n" +
+                "}\n" +
+                "return string(_real);\n" +
+                "}";
+        String[] functionArray = function.split("\\n");
+        for (String s : functionArray) {
+            lines.add(i, s);
+            i++;
+        }
     }
 }

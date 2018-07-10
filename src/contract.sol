@@ -10,6 +10,7 @@ contract Contract is usingTinyOracle {
     uint totalPrice;
     uint totalWeight;
 
+
     event queryBuyerGUIEvent();
     event queryManufacturerEvent(uint _quantity, uint _itemID);
     event queryPaymentEvent(uint _totalPrice, uint _creditCard);

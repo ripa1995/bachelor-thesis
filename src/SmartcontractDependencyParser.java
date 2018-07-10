@@ -1,3 +1,4 @@
+import model.Constant;
 import model.Dependency;
 import model.Item;
 import model.QueryDetails;
@@ -15,10 +16,12 @@ public class SmartcontractDependencyParser {
     private ArrayList<String> lines;
     private HashMap<String, Integer> invokedServices;
     private HashMap<String, QueryDetails> queryList;
+    private HashMap<String, Constant> constantHashMap;
     public SmartcontractDependencyParser(String fileName){
         depSC = new HashMap<String, Dependency>();
         invokedServices = new HashMap<String, Integer>();
         queryList = new HashMap<String, QueryDetails>();
+        constantHashMap = new HashMap<String, Constant>();
         File file = new File(fileName);
         lines = new ArrayList<String>();
         try {
@@ -159,7 +162,15 @@ public class SmartcontractDependencyParser {
             }
 
             if (Utils.isVariableInit(depSC.keySet(), token)) {
-                if (Utils.isInitByComputation(token)) {
+                if (Utils.isInitAsConstant(token)) {
+                    String t = token[2];
+                    if (t.endsWith(";")) {
+                        t = Utils.removeLastChar(t);
+                    }
+                    Integer integer = Integer.parseInt(t);
+                    Constant constant = new Constant(i, integer);
+                    constantHashMap.putIfAbsent(token[0], constant);
+                } else if (Utils.isInitByComputation(token)) {
                     dependency = depSC.get(token[0]);
                     dependency.addInit(i, "C");
                     depSC.replace(token[0], dependency);
@@ -235,5 +246,13 @@ public class SmartcontractDependencyParser {
                 System.out.println(i3.getLoc() + " "+i3.getT());
             }
         }
+    }
+
+    public HashMap<String, Constant> getConstantHashMap() {
+        return constantHashMap;
+    }
+
+    public void setConstantHashMap(HashMap<String, Constant> constantHashMap) {
+        this.constantHashMap = constantHashMap;
     }
 }

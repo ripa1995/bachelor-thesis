@@ -8,6 +8,7 @@ contract Contract is usingTinyOracle {
     uint creditCard;
     uint deliveryAddress;
     uint totalPrice;
+    uint totalPriceSupplier;
     uint totalWeight;
 
 
@@ -69,8 +70,8 @@ contract Contract is usingTinyOracle {
     }
 
     function _callbackSupplier(uint _supplierPrice) onlyFromTinyOracle external {
-        totalPrice = totalPrice + _supplierPrice;
-        queryPayment(totalPrice, creditCard);
+        totalPriceSupplier = totalPrice + _supplierPrice;
+        queryPayment(totalPriceSupplier, creditCard);
         queryDelivery(deliveryAddress, quantity, totalWeight);
     }
 

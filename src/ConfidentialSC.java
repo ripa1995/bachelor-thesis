@@ -23,6 +23,7 @@ public class ConfidentialSC {
     Dependency v3;
     String varName;
     HashMap<String, Constant> constantHashMap;
+    ArrayList<String> newVarNames;
 
     public void init(String fileName) {
         smartcontractDependencyParser = new SmartcontractDependencyParser(fileName);
@@ -36,6 +37,7 @@ public class ConfidentialSC {
         newLines = new ArrayList<Line>();
         queryList = smartcontractDependencyParser.getQueryList();
         constantHashMap = smartcontractDependencyParser.getConstantHashMap();
+        newVarNames = new ArrayList<String>();
         encrypter();
         addFunctionToSC();
     }
@@ -135,7 +137,7 @@ public class ConfidentialSC {
                                             s = s.replace(toBeReplaced, ciphertext.toString());
                                         }
                                         lines.set(c.getLoc(), s);
-                                    } else if (!dependencySC.containsKey(operator)) {
+                                    } else if ((!dependencySC.containsKey(operator))&&(!newVarNames.contains(operator))) {
                                         KeyPairBuilder keygen = new KeyPairBuilder();
                                         KeyPair keyPair = keygen.generateKeyPair();
                                         PublicKey publicKey = keyPair.getPublicKey();
@@ -161,8 +163,8 @@ public class ConfidentialSC {
                     default:
                         //linea 6-10
                         pos = 0;
-                        for(Item exploit: dependency.getExploit()) {
-                            computation(exploit, init, dependency);
+                        for(Item exploits: dependency.getExploit()) {
+                            computation(exploits, init, dependency);
                         }
                         break;
                 }
@@ -222,6 +224,7 @@ public class ConfidentialSC {
         //      22: end for
         //23: end switch
         Dependency v2 = null;
+        Item initV2 = null;
         switch (exploit.getT()) {
             case "C":
             case "Test":
@@ -230,6 +233,7 @@ public class ConfidentialSC {
                     for (Item init2 : dep.getInit()) {
                         if (init2.getLoc() == exploit.getLoc()) {
                             v2 = dep;
+                            initV2 = init2;
                             break;
                         }
                     }
@@ -239,31 +243,74 @@ public class ConfidentialSC {
                 for (Item exp : v2.getExploit()) {
                     if (invokedServices.containsKey(exp.getT())) {
                         //linea 12
-                        //TODO: generare il codice da inserire
                         int line = init.getLoc()-1;
-                        String code = "";
+                        //recupero il nome del parametro di output
+                        String paramName = getParamNameOfCurrentVar(init);
+                        if (paramName.isEmpty()) {
+                            //qualcosa è andato storto
+                            break;
+                        }
+                        //recupero l'enc schema della variabile nella callback di buyergui
+                        ArrayList<String> encOfVar = getEncOfCurrentVar(init);
+                        if (encOfVar == null) {
+                            //qualcosa è andato storto
+                            break;
+                        }
+                        //recupero la posizione all'interno del enc schema in base al metodo su cui ricadrà la variabile
+                        boolean found = false;
+                        String enc = "";
+                        for (Dependency dep : dependencySC.values()) {
+                            for (Item init2 : dep.getInit()) {
+                                if (init2.getLoc() == exploit.getLoc()) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (found) {
+                                Item item = dep.getExploit().get(0);
+                                enc = item.getT() + "Homomorphic";
+                                break;
+                            }
+                        }
+                        int encPos;
+                        if (found) {
+                            if (encOfVar.size() == 1) {
+                                encPos = 0;
+                            } else {
+                                encPos = encOfVar.indexOf(enc);
+                            }
+                        } else {
+                            break;
+                        }
+                        //converto il parametro di ritorno in stringa
+                        String code = "string memory " + varName + enc + serviceCount + "string = toString(" + paramName + "); ";
+                        //estrapolo dalla stringa ottenuta la parte di mio interesse (ipotizzo che ogni sottostringa di interesse
+                        //sia lunga 77, quindi modificando la posizione di partenza in base alla posizione encPos (77*0 -> prima posizione, 77*1, ecc.)
+                        code = code + "string memory " + varName + enc + serviceCount + "substring = substring(" + varName + enc + serviceCount +"string, " + 77 + ", " + 77*encPos + "); ";
+                        //converto nuovamente la sottostringa a uint
+                        String newVarName =varName + enc + serviceCount;
+                        code = code + "uint " + newVarName + " = parseInt(" + varName + enc + serviceCount + "substring);";
                         Line newLine = new Line(line, code);
                         newLines.add(newLine);
+                        //TODO: modificare la variabile usata nella computazione da es. "quantity" a "quantity"+...
                         pos++;
                         serviceCount++;
                         if (serviceCount>1) {
                             //linee 16-17
-                            //TODO: generare il codice da inserire
-                            line = init.getLoc()-1;
-                            code = "";
-                            newLine = new Line(line, code);
-                            newLines.add(newLine);
+                            //TODO: creare una copia di v2.getInit usando come variabile quella precedentemente creata
+
                         }
                     } else {
                         if (v2 != dependency) {
-                            computation(exp, init, v2);
+                            if ((!initV2.getT().equals("C"))&&(!initV2.getT().equals("Test"))) {
+                                computation(exp, initV2, v2);
+                            }
                         }
                     }
                 }
                 break;
             default:
                 //linea 4
-                //TODO: generare il codice da inserire
                 int line = init.getLoc()-1;
                 //recupero il nome del parametro di output
                 String paramName = getParamNameOfCurrentVar(init);
@@ -278,7 +325,12 @@ public class ConfidentialSC {
                     break;
                 }
                 //recupero la posizione all'interno del enc schema in base al metodo su cui ricadrà la variabile
-                int encPos = encOfVar.indexOf(exploit.getT());
+                int encPos;
+                if (encOfVar.size()==1) {
+                    encPos = 0;
+                } else {
+                    encPos = encOfVar.indexOf(exploit.getT());
+                }
                 //converto il parametro di ritorno in stringa
                 String code = "string memory " + varName + exploit.getT() + "string = toString(" + paramName + "); ";
                 //estrapolo dalla stringa ottenuta la parte di mio interesse (ipotizzo che ogni sottostringa di interesse
@@ -288,7 +340,7 @@ public class ConfidentialSC {
                 code = code + "uint " + varName + exploit.getT() + " = parseInt(" + varName + exploit.getT() + "substring);";
                 Line newLine = new Line(line, code);
                 newLines.add(newLine);
-                //devo modificare la variabile passata a exploit.getT()? da es. "quantity" a "quantity"+exploit.gett()
+                //TODO: modificare la variabile passata a exploit.getT()? da es. "quantity" a "quantity"+exploit.gett()
                 pos++;
                 break;
         }

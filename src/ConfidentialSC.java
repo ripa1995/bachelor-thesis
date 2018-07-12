@@ -243,7 +243,7 @@ public class ConfidentialSC {
                 for (Item exp : v2.getExploit()) {
                     if (invokedServices.containsKey(exp.getT())) {
                         //linea 12
-                        int line = init.getLoc()-1;
+                        int line = exploit.getLoc()-1;
                         //recupero il nome del parametro di output
                         String paramName = getParamNameOfCurrentVar(init);
                         if (paramName.isEmpty()) {

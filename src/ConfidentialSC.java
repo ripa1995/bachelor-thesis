@@ -133,7 +133,7 @@ public class ConfidentialSC {
                                         String toBeReplaced = c.getValue() + ";";
                                         s = s.replace(toBeReplaced, ciphertext.toString()+";");
                                         if (lenght==s.length()) {
-                                            toBeReplaced = "\\b" + c.getValue() + "\\b";
+                                            toBeReplaced = " " + c.getValue() + " ";
                                             s = s.replace(toBeReplaced, ciphertext.toString());
                                         }
                                         lines.set(c.getLoc(), s);
@@ -147,7 +147,7 @@ public class ConfidentialSC {
                                         String toBeReplaced = operator + ";";
                                         linea = linea.replace(toBeReplaced, ciphertext.toString()+";");
                                         if (lenght==linea.length()) {
-                                            toBeReplaced = "\\b" + operator + "\\b";
+                                            toBeReplaced = " " + operator + " ";
                                             linea = linea.replace(toBeReplaced, ciphertext.toString());
                                         }
                                     }
@@ -243,7 +243,12 @@ public class ConfidentialSC {
                 for (Item exp : v2.getExploit()) {
                     if (invokedServices.containsKey(exp.getT())) {
                         //linea 12
-                        int line = exploit.getLoc()-1;
+                        int line;
+                        if (invokedServices.containsValue(init.getLoc())) {
+                            line = exploit.getLoc() - 1;
+                        } else {
+                            line = init.getLoc()-1;
+                        }
                         //recupero il nome del parametro di output
                         String paramName = getParamNameOfCurrentVar(init);
                         if (paramName.isEmpty()) {
@@ -292,6 +297,16 @@ public class ConfidentialSC {
                         code = code + "uint " + newVarName + " = parseInt(" + varName + enc + serviceCount + "substring);";
                         Line newLine = new Line(line, code);
                         newLines.add(newLine);
+                        newVarNames.add(newVarName);
+                        String linea = lines.get(exploit.getLoc());
+                        int lenght = linea.length();
+                        String toBeReplaced = varName + " ";
+                        linea = linea.replace(toBeReplaced, newVarName + " ");
+                        if (lenght==linea.length()) {
+                            toBeReplaced = varName + ";";
+                            linea = linea.replace(toBeReplaced, newVarName+";");
+                        }
+                        lines.set(exploit.getLoc(), linea);
                         //TODO: modificare la variabile usata nella computazione da es. "quantity" a "quantity"+...
                         pos++;
                         serviceCount++;
@@ -311,7 +326,12 @@ public class ConfidentialSC {
                 break;
             default:
                 //linea 4
-                int line = init.getLoc()-1;
+                int line;
+                if (invokedServices.containsValue(init.getLoc())) {
+                    line = exploit.getLoc() - 1;
+                } else {
+                    line = init.getLoc()-1;
+                }
                 //recupero il nome del parametro di output
                 String paramName = getParamNameOfCurrentVar(init);
                 if (paramName.isEmpty()) {
@@ -337,9 +357,13 @@ public class ConfidentialSC {
                 //sia lunga 77, quindi modificando la posizione di partenza in base alla posizione encPos (77*0 -> prima posizione, 77*1, ecc.)
                 code = code + "string memory " + varName + exploit.getT() + "substring = substring(" + varName + exploit.getT() +"string, " + 77 + ", " + 77*encPos + "); ";
                 //converto nuovamente la sottostringa a uint
-                code = code + "uint " + varName + exploit.getT() + " = parseInt(" + varName + exploit.getT() + "substring);";
+                String newVarName = varName + exploit.getT();
+                code = code + "uint " + newVarName + " = parseInt(" + varName + exploit.getT() + "substring);";
                 Line newLine = new Line(line, code);
                 newLines.add(newLine);
+                String linea = lines.get(exploit.getLoc());
+                linea = linea.replace(varName,newVarName);
+                lines.set(exploit.getLoc(), linea);
                 //TODO: modificare la variabile passata a exploit.getT()? da es. "quantity" a "quantity"+exploit.gett()
                 pos++;
                 break;

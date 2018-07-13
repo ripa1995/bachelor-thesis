@@ -1,9 +1,13 @@
 import model.*;
 import util.Utils;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import jpaillier.*;
 
@@ -12,7 +16,7 @@ public class ConfidentialSC {
     SmartcontractDependencyParser smartcontractDependencyParser;
     HeaderParser headerParser;
     EncryptedOutputParser encryptedOutputParser;
-    ArrayList<String> lines;
+    ArrayList<String> linesSC;
     HashMap<String, Integer> invokedServices;
     HashMap<String, Dependency> dependencySC;
     HashMap<String, ArrayList<Header>> headers;
@@ -24,13 +28,17 @@ public class ConfidentialSC {
     String varName;
     HashMap<String, Constant> constantHashMap;
     ArrayList<String> newVarNames;
+    HashMap<Integer, String> duplicatedLines;
+    HashMap<Integer, String> lines;
+    ArrayList<Integer> linesToRemove;
+    ArrayList<String> csc;
 
     public void init(String fileName) {
         smartcontractDependencyParser = new SmartcontractDependencyParser(fileName);
-        lines = smartcontractDependencyParser.getLines();
+        linesSC = smartcontractDependencyParser.getLines();
         invokedServices = smartcontractDependencyParser.getInvokedServices();
         dependencySC = smartcontractDependencyParser.getDepSC();
-        headerParser = new HeaderParser(lines, invokedServices, dependencySC);
+        headerParser = new HeaderParser(linesSC, invokedServices, dependencySC);
         headers = headerParser.getHeaders();
         encryptedOutputParser = new EncryptedOutputParser(headers);
         encryptedOutput = encryptedOutputParser.getCoutput();
@@ -38,12 +46,16 @@ public class ConfidentialSC {
         queryList = smartcontractDependencyParser.getQueryList();
         constantHashMap = smartcontractDependencyParser.getConstantHashMap();
         newVarNames = new ArrayList<String>();
+        linesToRemove = new ArrayList<Integer>();
+        lines = new HashMap<Integer, String>();
+        duplicatedLines = new HashMap<Integer, String>();
         encrypter();
         addFunctionToSC();
+        rewriteCSC();
     }
 
     public void encrypter() {
-        //Let CSC be a copy of SC -> lines
+        //Let CSC be a copy of SC -> linesSC
         //2: headerlist = ""  -> headers
         //3: for all depv appartenenti depSC do
         //      4: switch (depv:init:T )
@@ -91,7 +103,7 @@ public class ConfidentialSC {
                     case "C":
                         //linea 12-21
                         int op = -1;
-                        String linea = lines.get(init.getLoc());
+                        String linea = linesSC.get(init.getLoc());
                         String operation = Utils.extractOperation(linea);
                         ArrayList<String> operators = Utils.extractOperators(linea);
                         if (operation!=null) {
@@ -124,7 +136,7 @@ public class ConfidentialSC {
                                     //pallier
                                     if (constantHashMap.containsKey(operator)) {
                                         Constant c = constantHashMap.get(operator);
-                                        String s = lines.get(c.getLoc());
+                                        String s = linesSC.get(c.getLoc());
                                         KeyPairBuilder keygen = new KeyPairBuilder();
                                         KeyPair keyPair = keygen.generateKeyPair();
                                         PublicKey publicKey = keyPair.getPublicKey();
@@ -136,7 +148,7 @@ public class ConfidentialSC {
                                             toBeReplaced = " " + c.getValue() + " ";
                                             s = s.replace(toBeReplaced, ciphertext.toString());
                                         }
-                                        lines.set(c.getLoc(), s);
+                                        linesSC.set(c.getLoc(), s);
                                     } else if ((!dependencySC.containsKey(operator))&&(!newVarNames.contains(operator))) {
                                         KeyPairBuilder keygen = new KeyPairBuilder();
                                         KeyPair keyPair = keygen.generateKeyPair();
@@ -153,7 +165,7 @@ public class ConfidentialSC {
                                     }
                                 }
                             }
-                            lines.set(init.getLoc(), linea);
+                            linesSC.set(init.getLoc(), linea);
                         }
                         break;
                     case "Test":
@@ -177,17 +189,17 @@ public class ConfidentialSC {
             if (headerVarInit != null) {
                 //modifico la linea in cui viene dichiarata aggiungendo il parametro Header
                 int decLine = queryDetails.getDecLine();
-                String declaration = lines.get(decLine);
+                String declaration = linesSC.get(decLine);
                 declaration = Utils.addHeaderParameter(declaration, ", string header");
-                lines.set(decLine, declaration);
+                linesSC.set(decLine, declaration);
                 for (int line : queryDetails.getInvocations()) {
                     //alla riga - 1 crea una variabile header
                     //modfica l'invocazione aggiungendo il parametro header
                     Line newLine = new Line(line - 1, getHeaderVarInit(queryName));
                     newLines.add(newLine);
-                    String invocation = lines.get(line);
+                    String invocation = linesSC.get(line);
                     invocation = Utils.addHeaderParameter(invocation, ", header");
-                    lines.set(line, invocation);
+                    linesSC.set(line, invocation);
                 }
             }
         }
@@ -229,7 +241,8 @@ public class ConfidentialSC {
             case "C":
             case "Test":
                 //linee 6-22
-                for (Dependency dep : dependencySC.values()) {
+                for (String var : dependencySC.keySet()) {
+                    Dependency dep = dependencySC.get(var);
                     for (Item init2 : dep.getInit()) {
                         if (init2.getLoc() == exploit.getLoc()) {
                             v2 = dep;
@@ -248,6 +261,7 @@ public class ConfidentialSC {
                             line = exploit.getLoc() - 1;
                         } else {
                             line = init.getLoc()-1;
+                            linesToRemove.add(init.getLoc());
                         }
                         //recupero il nome del parametro di output
                         String paramName = getParamNameOfCurrentVar(init);
@@ -288,17 +302,22 @@ public class ConfidentialSC {
                             break;
                         }
                         //converto il parametro di ritorno in stringa
-                        String code = "string memory " + varName + enc + serviceCount + "string = toString(" + paramName + "); ";
+                        String code = "string memory " + varName + enc + serviceCount + "string = toString(" + paramName + "); "+"\n";
                         //estrapolo dalla stringa ottenuta la parte di mio interesse (ipotizzo che ogni sottostringa di interesse
                         //sia lunga 77, quindi modificando la posizione di partenza in base alla posizione encPos (77*0 -> prima posizione, 77*1, ecc.)
-                        code = code + "string memory " + varName + enc + serviceCount + "substring = substring(" + varName + enc + serviceCount +"string, " + 77 + ", " + 77*encPos + "); ";
+                        code = code + "string memory " + varName + enc + serviceCount + "substring = substring(" + varName + enc + serviceCount +"string, " + 77 + ", " + 77*encPos + "); "+"\n";
                         //converto nuovamente la sottostringa a uint
                         String newVarName =varName + enc + serviceCount;
                         code = code + "uint " + newVarName + " = parseInt(" + varName + enc + serviceCount + "substring);";
                         Line newLine = new Line(line, code);
                         newLines.add(newLine);
                         newVarNames.add(newVarName);
-                        String linea = lines.get(exploit.getLoc());
+                        String linea;
+                        if (lines.containsKey(exploit.getLoc())){
+                            linea = lines.get(exploit.getLoc());
+                        } else {
+                            linea = linesSC.get(exploit.getLoc());
+                        }
                         int lenght = linea.length();
                         String toBeReplaced = varName + " ";
                         linea = linea.replace(toBeReplaced, newVarName + " ");
@@ -306,13 +325,42 @@ public class ConfidentialSC {
                             toBeReplaced = varName + ";";
                             linea = linea.replace(toBeReplaced, newVarName+";");
                         }
-                        lines.set(exploit.getLoc(), linea);
-                        //TODO: modificare la variabile usata nella computazione da es. "quantity" a "quantity"+...
+                        lines.put(exploit.getLoc(), linea);
+
                         pos++;
                         serviceCount++;
                         if (serviceCount>1) {
                             //linee 16-17
-                            //TODO: creare una copia di v2.getInit usando come variabile quella precedentemente creata
+
+                            int i = initV2.getLoc();
+                            String duplicatedLine;
+
+                            if (duplicatedLines.containsKey(i)) {
+                                duplicatedLine = duplicatedLines.get(i);
+                            } else {
+                                duplicatedLine = linesSC.get(i);
+                                String[] token = duplicatedLine.trim().split("\\s");
+                                String initVar;
+                                if (!Utils.isType(token[0])) {
+                                    initVar = token[0];
+                                } else if(!Utils.isStoreKeyword(token[1])) {
+                                    initVar = token[1];
+                                } else {
+                                    initVar = token[2];
+                                }
+                                String typeAndStore = Utils.getTypeAndStoreOfVar(linesSC, initVar);
+                                duplicatedLine = duplicatedLine.replaceFirst(initVar, typeAndStore+" "+initVar+serviceCount);
+                                //sostituisco il nome della variabile nella lista dei parametri relativi all'exploit considerato
+                                String s = linesSC.get(exp.getLoc());
+                                s = s.replace(initVar, initVar+serviceCount);
+                                linesSC.set(exp.getLoc(), s);
+                            }
+                            duplicatedLine = duplicatedLine.replace(varName, newVarName);
+
+                            duplicatedLines.put(i,duplicatedLine);
+
+
+
 
                         }
                     } else {
@@ -331,6 +379,7 @@ public class ConfidentialSC {
                     line = exploit.getLoc() - 1;
                 } else {
                     line = init.getLoc()-1;
+                    linesToRemove.add(init.getLoc());
                 }
                 //recupero il nome del parametro di output
                 String paramName = getParamNameOfCurrentVar(init);
@@ -352,19 +401,19 @@ public class ConfidentialSC {
                     encPos = encOfVar.indexOf(exploit.getT());
                 }
                 //converto il parametro di ritorno in stringa
-                String code = "string memory " + varName + exploit.getT() + "string = toString(" + paramName + "); ";
+                String code = "string memory " + varName + exploit.getT() + "string = toString(" + paramName + "); "+"\n";
                 //estrapolo dalla stringa ottenuta la parte di mio interesse (ipotizzo che ogni sottostringa di interesse
                 //sia lunga 77, quindi modificando la posizione di partenza in base alla posizione encPos (77*0 -> prima posizione, 77*1, ecc.)
-                code = code + "string memory " + varName + exploit.getT() + "substring = substring(" + varName + exploit.getT() +"string, " + 77 + ", " + 77*encPos + "); ";
+                code = code + "string memory " + varName + exploit.getT() + "substring = substring(" + varName + exploit.getT() +"string, " + 77 + ", " + 77*encPos + "); "+"\n";
                 //converto nuovamente la sottostringa a uint
                 String newVarName = varName + exploit.getT();
                 code = code + "uint " + newVarName + " = parseInt(" + varName + exploit.getT() + "substring);";
                 Line newLine = new Line(line, code);
                 newLines.add(newLine);
-                String linea = lines.get(exploit.getLoc());
+                String linea = linesSC.get(exploit.getLoc());
                 linea = linea.replace(varName,newVarName);
-                lines.set(exploit.getLoc(), linea);
-                //TODO: modificare la variabile passata a exploit.getT()? da es. "quantity" a "quantity"+exploit.gett()
+                linesSC.set(exploit.getLoc(), linea);
+
                 pos++;
                 break;
         }
@@ -372,7 +421,7 @@ public class ConfidentialSC {
 
     private String getParamNameOfCurrentVar(Item init) {
         String paramName="";
-        ArrayList<String> param = Utils.extractParam(lines.get(invokedServices.get(init.getT())).split("\\s"));
+        ArrayList<String> param = Utils.extractParam(linesSC.get(invokedServices.get(init.getT())).split("\\s"));
         for (int i=0; i<param.size(); i++) {
             paramName = param.get(i);
             if (paramName.endsWith(varName)){
@@ -402,7 +451,7 @@ public class ConfidentialSC {
     private String getHeaderVarInit(String queryName) {
         Header header;
         ArrayList<String> encHeader;
-        String newVar = "string header = ";
+        String newVar = "string header = \"";
         ArrayList<Header> headerVar = headers.get(queryName);
         if (headerVar == null) {
             return null;
@@ -420,20 +469,20 @@ public class ConfidentialSC {
         newVar = newVar + header.getVarName();
         encHeader = header.getEnc();
         if (encHeader.size()==0) {
-            newVar = newVar + ";";
+            newVar = newVar + "\";";
         } else {
             newVar = newVar + ", ";
             last = encHeader.size() - 1;
             for (int j = 0; j < last; j++) {
                 newVar = newVar + encHeader.get(j) + ", ";
             }
-            newVar = newVar + encHeader.get(last) + ";";
+            newVar = newVar + encHeader.get(last) + "\";";
         }
         return newVar;
     }
 
     private void addFunctionToSC(){
-        int i = lines.lastIndexOf("}");
+        int i = linesSC.lastIndexOf("}");
         String function = "function parseInt(string _value) public returns (uint _ret) {\n" +
                 "bytes memory _bytesValue = bytes(_value);\n" +
                 "uint j = 1;\n" +
@@ -471,8 +520,59 @@ public class ConfidentialSC {
                 "}";
         String[] functionArray = function.split("\\n");
         for (String s : functionArray) {
-            lines.add(i, s);
+            linesSC.add(i, s);
             i++;
+        }
+    }
+
+    public void rewriteCSC() {
+        csc = linesSC;
+        //Sostituisce le inizializzazioni da computazione
+        for(int i:lines.keySet()) {
+            csc.set(i,lines.get(i));
+        }
+        //"rimuove" le linee in eccesso
+        for(int i: linesToRemove){
+            csc.set(i, "");
+        }
+        //aggiunge alla lista di nuove linee quelle riguardanti le variabili duplicate
+        for(int i: duplicatedLines.keySet()) {
+            newLines.add(new Line(i,duplicatedLines.get(i)));
+        }
+        //rimuove duplicati
+        ArrayList<Line> noDuplicates = new ArrayList<Line>();
+        for (Line line:newLines) {
+            boolean isFound = false;
+            //controllo che non sia presente in noDup
+            for (Line l:noDuplicates) {
+                if (l.getCode().equals(line.getCode())) {
+                    isFound = true;
+                    break;
+                }
+            }
+            if (!isFound) noDuplicates.add(line);
+        }
+        //Ordinamento decrescente in base alla loc
+        noDuplicates.sort(new Comparator<Line>() {
+            @Override
+            public int compare(Line o1, Line o2) {
+                return Integer.compare(o2.getLoc(), o1.getLoc());
+            }
+        });
+        //aggiunge le nuove linee al csc
+        for(Line line: noDuplicates) {
+            csc.add(line.getLoc()+1,line.getCode());
+        }
+        FileWriter writer = null;
+        try {
+            writer = new FileWriter("confidentialSC.sol");
+
+        for(String str: csc) {
+            writer.write(str+"\n");
+        }
+        writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

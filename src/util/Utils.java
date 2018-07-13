@@ -316,4 +316,19 @@ public class Utils {
         }
         return null;
     }
+
+    public static String getTypeAndStoreOfVar(ArrayList<String> linesSC, String initVar) {
+        for (String s:linesSC) {
+            String[] token = s.trim().split("\\s");
+            if (Utils.isType(token[0])) {
+                //la prima parola è un tipo di variabile -> definendo una variabile
+                if (Utils.isStoreKeyword(token[1])) {
+                    if(token[2].startsWith(initVar)) return  token[0]+" "+token[1];
+                } else {
+                    if(token[1].startsWith(initVar)) return  token[0];
+                }
+            }
+        }
+        return "bytes";
+    }
 }

@@ -1,5 +1,5 @@
 pragma solidity ^0.4.0;
-import "api.sol";
+pragma experimental ABIEncoderV2;
 
 contract Contract is usingTinyOracle {
 

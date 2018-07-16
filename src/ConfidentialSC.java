@@ -28,6 +28,7 @@ public class ConfidentialSC {
     String varName;
     HashMap<String, Constant> constantHashMap;
     ArrayList<String> newVarNames;
+    ArrayList<String> oldVarNames;
     HashMap<Integer, String> duplicatedLines;
     HashMap<Integer, String> lines;
     ArrayList<Integer> linesToRemove;
@@ -46,6 +47,7 @@ public class ConfidentialSC {
         queryList = smartcontractDependencyParser.getQueryList();
         constantHashMap = smartcontractDependencyParser.getConstantHashMap();
         newVarNames = new ArrayList<String>();
+        oldVarNames = new ArrayList<String>();
         linesToRemove = new ArrayList<Integer>();
         lines = new HashMap<Integer, String>();
         duplicatedLines = new HashMap<Integer, String>();
@@ -308,10 +310,11 @@ public class ConfidentialSC {
                         code = code + "string memory " + varName + enc + serviceCount + "substring = substring(" + varName + enc + serviceCount +"string, " + 77 + ", " + 77*encPos + "); "+"\n";
                         //converto nuovamente la sottostringa a uint
                         String newVarName =varName + enc + serviceCount;
-                        code = code + "uint " + newVarName + " = parseInt(" + varName + enc + serviceCount + "substring);";
+                        code = code + newVarName + " = parseInt(" + varName + enc + serviceCount + "substring);";
                         Line newLine = new Line(line, code);
                         newLines.add(newLine);
                         newVarNames.add(newVarName);
+                        oldVarNames.add(varName);
                         String linea;
                         if (lines.containsKey(exploit.getLoc())){
                             linea = lines.get(exploit.getLoc());
@@ -407,7 +410,9 @@ public class ConfidentialSC {
                 code = code + "string memory " + varName + exploit.getT() + "substring = substring(" + varName + exploit.getT() +"string, " + 77 + ", " + 77*encPos + "); "+"\n";
                 //converto nuovamente la sottostringa a uint
                 String newVarName = varName + exploit.getT();
-                code = code + "uint " + newVarName + " = parseInt(" + varName + exploit.getT() + "substring);";
+                newVarNames.add(newVarName);
+                oldVarNames.add(varName);
+                code = code + newVarName + " = parseInt(" + varName + exploit.getT() + "substring);";
                 Line newLine = new Line(line, code);
                 newLines.add(newLine);
                 String linea = linesSC.get(exploit.getLoc());
@@ -552,6 +557,19 @@ public class ConfidentialSC {
             }
             if (!isFound) noDuplicates.add(line);
         }
+        //rimuove duplicati
+        ArrayList<String> noDuplicatesVar = new ArrayList<String>();
+        for (String s:oldVarNames) {
+            boolean isFound = false;
+            //controllo che non sia presente in noDup
+            for (String l:noDuplicatesVar) {
+                if (l.equals(s)) {
+                    isFound = true;
+                    break;
+                }
+            }
+            if (!isFound) noDuplicatesVar.add(s);
+        }
         //Ordinamento decrescente in base alla loc
         noDuplicates.sort(new Comparator<Line>() {
             @Override
@@ -562,6 +580,38 @@ public class ConfidentialSC {
         //aggiunge le nuove linee al csc
         for(Line line: noDuplicates) {
             csc.add(line.getLoc()+1,line.getCode());
+        }
+        boolean declaration = true;
+        int i = 0;
+        linesToRemove.clear();
+        for(String s2: csc) {
+            String[] token = s2.trim().split("\\s");
+            if (Utils.isType(token[0])) {
+                if (Utils.isStoreKeyword(token[1])) {
+                    if(oldVarNames.contains(Utils.removeLastChar(token[2]))) {
+                        i = csc.indexOf(s2);
+                        linesToRemove.add(i);
+                    }
+                } else {
+                    if(oldVarNames.contains(Utils.removeLastChar(token[1]))) {
+                        i = csc.indexOf(s2);
+                        linesToRemove.add(i);
+                    }
+                }
+            }
+            if (Utils.isFunction(s2)||Utils.isCallback(s2)||Utils.isQuery(s2)) {
+                break;
+            }
+        }
+        //"rimuove" le linee in eccesso
+        Collections.sort(linesToRemove,Collections.reverseOrder());
+        for(int j: linesToRemove){
+            csc.remove(j);
+        }
+        if (i>0) {
+            for (String s : newVarNames) {
+                csc.add(i, "uint " + s +";");
+            }
         }
         FileWriter writer = null;
         try {

@@ -3,13 +3,26 @@ pragma experimental ABIEncoderV2;
 
 contract Contract is usingTinyOracle {
 
-    uint quantity;
-    uint itemID;
-    uint creditCard;
-    uint deliveryAddress;
     uint totalPrice;
     uint totalPriceSupplier;
     uint totalWeight;
+    uint creditCardqueryPayment;
+    uint creditCardqueryPayment;
+    uint _weightqueryDeliveryHomomorphic1;
+    uint _weightqueryDeliveryHomomorphic0;
+    uint _pricequeryPaymentHomomorphic0;
+    uint deliveryAddressqueryDelivery;
+    uint deliveryAddressqueryDelivery;
+    uint quantityqueryDelivery;
+    uint quantityquerySupplier;
+    uint quantityqueryDelivery;
+    uint quantityqueryDeliveryHomomorphic1;
+    uint quantityqueryDeliveryHomomorphic0;
+    uint quantityqueryPaymentHomomorphic0;
+    uint quantityqueryManufacturer;
+    uint itemIDquerySupplier;
+    uint itemIDqueryManufacturer;
+    uint _supplierPricequeryPaymentHomomorphic0;
 
 
     event queryBuyerGUIEvent();
@@ -54,37 +67,37 @@ contract Contract is usingTinyOracle {
     function _callbackBuyerGUI(uint _quantity, uint _itemID, uint _creditCard, uint _deliveryAddress) onlyFromTinyOracle external {
         string memory creditCardqueryPaymentstring = toString(_creditCard);
         string memory creditCardqueryPaymentsubstring = substring(creditCardqueryPaymentstring, 77, 0);
-        uint creditCardqueryPayment = parseInt(creditCardqueryPaymentsubstring);
+        creditCardqueryPayment = parseInt(creditCardqueryPaymentsubstring);
 
         string memory quantityquerySupplierstring = toString(_quantity);
         string memory quantityquerySuppliersubstring = substring(quantityquerySupplierstring, 77, 308);
-        uint quantityquerySupplier = parseInt(quantityquerySuppliersubstring);
+        quantityquerySupplier = parseInt(quantityquerySuppliersubstring);
         string memory quantityqueryDeliverystring = toString(_quantity);
         string memory quantityqueryDeliverysubstring = substring(quantityqueryDeliverystring, 77, 231);
-        uint quantityqueryDelivery = parseInt(quantityqueryDeliverysubstring);
+        quantityqueryDelivery = parseInt(quantityqueryDeliverysubstring);
         string memory quantityqueryDeliveryHomomorphic1string = toString(_quantity);
         string memory quantityqueryDeliveryHomomorphic1substring = substring(quantityqueryDeliveryHomomorphic1string, 77, 154);
-        uint quantityqueryDeliveryHomomorphic1 = parseInt(quantityqueryDeliveryHomomorphic1substring);
+        quantityqueryDeliveryHomomorphic1 = parseInt(quantityqueryDeliveryHomomorphic1substring);
         string memory quantityqueryDeliveryHomomorphic0string = toString(_quantity);
         string memory quantityqueryDeliveryHomomorphic0substring = substring(quantityqueryDeliveryHomomorphic0string, 77, 154);
-        uint quantityqueryDeliveryHomomorphic0 = parseInt(quantityqueryDeliveryHomomorphic0substring);
+        quantityqueryDeliveryHomomorphic0 = parseInt(quantityqueryDeliveryHomomorphic0substring);
         string memory quantityqueryPaymentHomomorphic0string = toString(_quantity);
         string memory quantityqueryPaymentHomomorphic0substring = substring(quantityqueryPaymentHomomorphic0string, 77, 77);
-        uint quantityqueryPaymentHomomorphic0 = parseInt(quantityqueryPaymentHomomorphic0substring);
+        quantityqueryPaymentHomomorphic0 = parseInt(quantityqueryPaymentHomomorphic0substring);
         string memory quantityqueryManufacturerstring = toString(_quantity);
         string memory quantityqueryManufacturersubstring = substring(quantityqueryManufacturerstring, 77, 0);
-        uint quantityqueryManufacturer = parseInt(quantityqueryManufacturersubstring);
+        quantityqueryManufacturer = parseInt(quantityqueryManufacturersubstring);
 
         string memory deliveryAddressqueryDeliverystring = toString(_deliveryAddress);
         string memory deliveryAddressqueryDeliverysubstring = substring(deliveryAddressqueryDeliverystring, 77, 0);
-        uint deliveryAddressqueryDelivery = parseInt(deliveryAddressqueryDeliverysubstring);
+        deliveryAddressqueryDelivery = parseInt(deliveryAddressqueryDeliverysubstring);
 
         string memory itemIDquerySupplierstring = toString(_itemID);
         string memory itemIDquerySuppliersubstring = substring(itemIDquerySupplierstring, 77, 77);
-        uint itemIDquerySupplier = parseInt(itemIDquerySuppliersubstring);
+        itemIDquerySupplier = parseInt(itemIDquerySuppliersubstring);
         string memory itemIDqueryManufacturerstring = toString(_itemID);
         string memory itemIDqueryManufacturersubstring = substring(itemIDqueryManufacturerstring, 77, 0);
-        uint itemIDqueryManufacturer = parseInt(itemIDqueryManufacturersubstring);
+        itemIDqueryManufacturer = parseInt(itemIDqueryManufacturersubstring);
 
         string header = "_availability, _price, queryPaymentHomomorphic, _weight, queryDeliveryHomomorphic";
         queryManufacturer(quantityqueryManufacturer, itemIDqueryManufacturer, header);
@@ -93,15 +106,15 @@ contract Contract is usingTinyOracle {
     function _callbackManufacturer(uint _availability, uint _price, uint _weight) onlyFromTinyOracle external {
         string memory _pricequeryPaymentHomomorphic0string = toString(_price);
         string memory _pricequeryPaymentHomomorphic0substring = substring(_pricequeryPaymentHomomorphic0string, 77, 0);
-        uint _pricequeryPaymentHomomorphic0 = parseInt(_pricequeryPaymentHomomorphic0substring);
+        _pricequeryPaymentHomomorphic0 = parseInt(_pricequeryPaymentHomomorphic0substring);
         totalPrice = _pricequeryPaymentHomomorphic0 * quantityqueryPaymentHomomorphic0;
         if (_availability == 1) {
             string memory _weightqueryDeliveryHomomorphic1string = toString(_weight);
             string memory _weightqueryDeliveryHomomorphic1substring = substring(_weightqueryDeliveryHomomorphic1string, 77, 0);
-            uint _weightqueryDeliveryHomomorphic1 = parseInt(_weightqueryDeliveryHomomorphic1substring);
+            _weightqueryDeliveryHomomorphic1 = parseInt(_weightqueryDeliveryHomomorphic1substring);
             string memory _weightqueryDeliveryHomomorphic0string = toString(_weight);
             string memory _weightqueryDeliveryHomomorphic0substring = substring(_weightqueryDeliveryHomomorphic0string, 77, 0);
-            uint _weightqueryDeliveryHomomorphic0 = parseInt(_weightqueryDeliveryHomomorphic0substring);
+            _weightqueryDeliveryHomomorphic0 = parseInt(_weightqueryDeliveryHomomorphic0substring);
             totalWeight = quantityqueryDeliveryHomomorphic0 * _weightqueryDeliveryHomomorphic0;
             uint totalWeight2 = quantityqueryDeliveryHomomorphic1 * _weightqueryDeliveryHomomorphic1;
             queryPayment(totalPrice, creditCardqueryPayment);
@@ -115,7 +128,7 @@ contract Contract is usingTinyOracle {
     function _callbackSupplier(uint _supplierPrice) onlyFromTinyOracle external {
         string memory _supplierPricequeryPaymentHomomorphic0string = toString(_supplierPrice);
         string memory _supplierPricequeryPaymentHomomorphic0substring = substring(_supplierPricequeryPaymentHomomorphic0string, 77, 0);
-        uint _supplierPricequeryPaymentHomomorphic0 = parseInt(_supplierPricequeryPaymentHomomorphic0substring);
+        _supplierPricequeryPaymentHomomorphic0 = parseInt(_supplierPricequeryPaymentHomomorphic0substring);
         totalPriceSupplier = totalPrice + _supplierPricequeryPaymentHomomorphic0;
         queryPayment(totalPriceSupplier, creditCardqueryPayment);
         queryDelivery(deliveryAddressqueryDelivery, quantityqueryDelivery, totalWeight2);

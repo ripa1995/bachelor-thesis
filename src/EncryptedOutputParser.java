@@ -1,3 +1,8 @@
+import model.DoubleEncValue;
+import model.EncValue;
+import model.EncryptedOutput;
+import model.Header;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -59,4 +64,11 @@ public class EncryptedOutputParser {
 
     }
 
+    public HashMap<String, ArrayList<EncryptedOutput>> getCoutput() {
+        return coutput;
+    }
+
+    public void setCoutput(HashMap<String, ArrayList<EncryptedOutput>> coutput) {
+        this.coutput = coutput;
+    }
 }

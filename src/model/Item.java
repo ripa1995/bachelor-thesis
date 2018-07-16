@@ -1,6 +1,8 @@
+package model;
+
 public class Item{
-    int loc;
-    String T;
+    private int loc;
+    private String T;
 
     public Item(){}
 

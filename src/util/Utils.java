@@ -1,3 +1,5 @@
+package util;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -142,6 +144,31 @@ public class Utils {
         return false;
     }
 
+    public static boolean isInitAsConstant(String[] token) {
+
+        //vedere se è computata o ritornata da un invokedServices
+        if (token[2].startsWith("_") && token[2].endsWith(";")){
+            return false;
+        }
+        if (token[2].endsWith(";")) {
+            token[2] = removeLastChar(token[2]);
+        }
+        Integer t = tryParse(token[2]);
+        if (t==null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static Integer tryParse(String text) {
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     public static boolean isInitByComputation(String[] token) {
 
         //vedere se è computata o ritornata da un invokedServices
@@ -233,5 +260,75 @@ public class Utils {
     public static String extractQueryName(String s) {
         return s.substring(5);
 
+    }
+
+    public static String extractOperation(String s) {
+        s = s.replace("=", " ");
+        String[] strings = s.trim().split(" ");
+        //string[0] var init by C
+        for (String s1 : strings) {
+            if (s1.contains("+")) {
+                return "+";
+            }
+            if (s1.contains("-")) {
+                return "-";
+            }
+            if (s1.contains("*")) {
+                return "*";
+            }
+            if (s1.contains("/")) {
+                return "/";
+            }
+        }
+        return null;
+    }
+
+    public static ArrayList<String> extractOperators(String s) {
+        s = s.replaceAll("[^\\w\\s]"," ");
+        String[] strings = s.trim().split(" ");
+        ArrayList<String> arrayList = new ArrayList<>();
+        for (int i = 1 ; i<strings.length; i++) {
+            if (!strings[i].isEmpty()) {
+                arrayList.add(strings[i]);
+            }
+        }
+        if (arrayList.size()>0) return arrayList;
+        return null;
+    }
+
+    public static String addHeaderParameter(String declaration, String parameter) {
+        int i = declaration.indexOf(")");
+        String prefix = declaration.substring(0,i);
+        String postfix = declaration.substring(i);
+        prefix = prefix.trim();
+        if (prefix.endsWith("(")) {
+            parameter = parameter.replace(",","");
+        }
+        return prefix + parameter + postfix;
+    }
+
+    public static String serviceName(String t) {
+        if (isQuery(t)) {
+            return extractQueryName(t);
+        }
+        if (isCallback(t)) {
+            return extractCallbackName(t);
+        }
+        return null;
+    }
+
+    public static String getTypeAndStoreOfVar(ArrayList<String> linesSC, String initVar) {
+        for (String s:linesSC) {
+            String[] token = s.trim().split("\\s");
+            if (Utils.isType(token[0])) {
+                //la prima parola è un tipo di variabile -> definendo una variabile
+                if (Utils.isStoreKeyword(token[1])) {
+                    if(token[2].startsWith(initVar)) return  token[0]+" "+token[1];
+                } else {
+                    if(token[1].startsWith(initVar)) return  token[0];
+                }
+            }
+        }
+        return "bytes";
     }
 }

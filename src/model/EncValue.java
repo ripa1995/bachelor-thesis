@@ -1,3 +1,5 @@
+package model;
+
 public class EncValue {
     private String varName;
     private String key;

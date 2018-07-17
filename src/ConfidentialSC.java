@@ -351,12 +351,12 @@ public class ConfidentialSC {
                                 } else {
                                     initVar = token[2];
                                 }
-                                String typeAndStore = Utils.getTypeAndStoreOfVar(linesSC, initVar);
-                                duplicatedLine = duplicatedLine.replaceFirst(initVar, typeAndStore+" "+initVar+serviceCount);
+                                duplicatedLine = duplicatedLine.replaceFirst(initVar, initVar+serviceCount);
                                 //sostituisco il nome della variabile nella lista dei parametri relativi all'exploit considerato
                                 String s = linesSC.get(exp.getLoc());
                                 s = s.replace(initVar, initVar+serviceCount);
                                 linesSC.set(exp.getLoc(), s);
+                                newVarNames.add(initVar+serviceCount);
                             }
                             duplicatedLine = duplicatedLine.replace(varName, newVarName);
 
@@ -608,8 +608,20 @@ public class ConfidentialSC {
         for(int j: linesToRemove){
             csc.remove(j);
         }
+        noDuplicatesVar.clear();
+        for (String s:newVarNames) {
+            boolean isFound = false;
+            //controllo che non sia presente in noDup
+            for (String l:noDuplicatesVar) {
+                if (l.equals(s)) {
+                    isFound = true;
+                    break;
+                }
+            }
+            if (!isFound) noDuplicatesVar.add(s);
+        }
         if (i>0) {
-            for (String s : newVarNames) {
+            for (String s : noDuplicatesVar) {
                 csc.add(i, "uint " + s +";");
             }
         }

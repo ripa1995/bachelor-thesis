@@ -7,15 +7,13 @@ contract Contract is usingTinyOracle {
     uint totalPriceSupplier;
     uint totalWeight;
     uint creditCardqueryPayment;
-    uint creditCardqueryPayment;
     uint _weightqueryDeliveryHomomorphic1;
     uint _weightqueryDeliveryHomomorphic0;
     uint _pricequeryPaymentHomomorphic0;
     uint deliveryAddressqueryDelivery;
-    uint deliveryAddressqueryDelivery;
-    uint quantityqueryDelivery;
     uint quantityquerySupplier;
     uint quantityqueryDelivery;
+    uint totalWeight2;
     uint quantityqueryDeliveryHomomorphic1;
     uint quantityqueryDeliveryHomomorphic0;
     uint quantityqueryPaymentHomomorphic0;
@@ -116,7 +114,7 @@ contract Contract is usingTinyOracle {
             string memory _weightqueryDeliveryHomomorphic0substring = substring(_weightqueryDeliveryHomomorphic0string, 77, 0);
             _weightqueryDeliveryHomomorphic0 = parseInt(_weightqueryDeliveryHomomorphic0substring);
             totalWeight = quantityqueryDeliveryHomomorphic0 * _weightqueryDeliveryHomomorphic0;
-            uint totalWeight2 = quantityqueryDeliveryHomomorphic1 * _weightqueryDeliveryHomomorphic1;
+            totalWeight2 = quantityqueryDeliveryHomomorphic1 * _weightqueryDeliveryHomomorphic1;
             queryPayment(totalPrice, creditCardqueryPayment);
             queryDelivery(deliveryAddressqueryDelivery, quantityqueryDelivery, totalWeight);
         } else {

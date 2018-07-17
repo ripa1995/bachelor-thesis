@@ -4,10 +4,7 @@ import util.Utils;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import jpaillier.*;
 
@@ -53,7 +50,6 @@ public class ConfidentialSC {
         duplicatedLines = new HashMap<Integer, String>();
         encrypter();
         addFunctionToSC();
-        rewriteCSC();
     }
 
     public void encrypter() {
@@ -530,7 +526,7 @@ public class ConfidentialSC {
         }
     }
 
-    public void rewriteCSC() {
+    public void generateCSC() {
         csc = linesSC;
         //Sostituisce le inizializzazioni da computazione
         for(int i:lines.keySet()) {
@@ -625,14 +621,21 @@ public class ConfidentialSC {
                 csc.add(i, "uint " + s +";");
             }
         }
+    }
+
+    public void rewriteCSC(String path) {
         FileWriter writer = null;
         try {
-            writer = new FileWriter("confidentialSC.sol");
+            if (path.endsWith("\\")||path.endsWith("/")) {
+                writer = new FileWriter(path + "confidentialSC.sol");
 
-        for(String str: csc) {
-            writer.write(str+"\n");
-        }
-        writer.close();
+                for (String str : csc) {
+                    writer.write(str + "\n");
+                }
+                writer.close();
+            } else {
+                System.out.println("Last separator missing");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

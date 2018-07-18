@@ -452,7 +452,7 @@ public class ConfidentialSC {
     private String getHeaderVarInit(String queryName) {
         Header header;
         ArrayList<String> encHeader;
-        String newVar = "string header = \"";
+        String newVar = "string memory header = \"";
         ArrayList<Header> headerVar = headers.get(queryName);
         if (headerVar == null) {
             return null;

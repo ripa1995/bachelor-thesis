@@ -103,12 +103,7 @@ public class SmartcontractDependencyParser {
                 //prima parola è function -> definendo una function
                 if (Utils.isQuery(token[1])) {
                     //query
-                    String methodName = Utils.extractMethodName(token[1]);
-                    invokedServices.putIfAbsent(methodName,i);
-                    QueryDetails queryDetails = new QueryDetails();
-                    queryDetails.setDecLine(i);
-                    queryList.putIfAbsent(methodName.substring(5), queryDetails);
-                    continue;
+
                 } else if (Utils.isCallback(token[1])) {
                     //callback
                     String methodName = Utils.extractMethodName(token[1]);
@@ -137,8 +132,12 @@ public class SmartcontractDependencyParser {
                 }
             }
             if (Utils.isEvent(token[0])) {
-                //prima parola è event -> definendo un event
-                //serve?
+                String methodName = Utils.extractMethodName(token[1]);
+                invokedServices.putIfAbsent(methodName,i);
+                QueryDetails queryDetails = new QueryDetails();
+                queryDetails.setDecLine(i);
+                queryList.putIfAbsent(methodName.substring(5), queryDetails);
+                continue;
             }
         }
     }

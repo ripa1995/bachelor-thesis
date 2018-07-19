@@ -642,11 +642,11 @@ public class ConfidentialSC {
         }
     }
 
-    public void rewriteCSC(String path) {
+    public void rewriteCSC(String path, String fileName) {
         FileWriter writer = null;
         try {
             if (path.endsWith("\\")||path.endsWith("/")) {
-                writer = new FileWriter(path + "confidentialSC.sol");
+                writer = new FileWriter(path + fileName);
 
                 for (String str : csc) {
                     writer.write(str + "\n");

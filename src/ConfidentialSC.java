@@ -181,10 +181,11 @@ public class ConfidentialSC {
             }
         }
         //linee 23-37
+
         for(String queryName:queryList.keySet()){
             QueryDetails queryDetails = queryList.get(queryName);
             String headerVarInit = getHeaderVarInit(queryName);
-            if (!headerVarInit.equals("string memory header = \"\";")) {
+            if (!headerVarInit.equals("header = \"\";")) {
                 //modifico la linea in cui viene dichiarata aggiungendo il parametro Header
                 int decLine = queryDetails.getDecLine();
                 String declaration = linesSC.get(decLine);
@@ -452,7 +453,7 @@ public class ConfidentialSC {
     private String getHeaderVarInit(String queryName) {
         Header header;
         ArrayList<String> encHeader;
-        String newVar = "string memory header = \"";
+        String newVar = "header = \"";
         int lenght = newVar.length();
         ArrayList<Header> headerVar = null;
         for(String key:headers.keySet()) {
@@ -462,7 +463,7 @@ public class ConfidentialSC {
             }
         }
         if (headerVar == null) {
-            return "string memory header = \"\";";
+            return "header = \"\";";
         }
         int last = headerVar.size()-1;
         for (int i = 0; i< last; i++) {
@@ -640,6 +641,7 @@ public class ConfidentialSC {
                 csc.add(i, "uint " + s +";");
             }
         }
+        csc.add(i,"string header;");
     }
 
     public void rewriteCSC(String path, String fileName) {

@@ -22,12 +22,12 @@ contract Contract {
 
     event queryBuyerGUI(string header);
     event queryManufacturer(uint _quantity, uint _itemID, string header);
-    event queryPayment(uint _totalPrice, uint _creditCard, string header);
+    event queryPayment(uint _totalPrice, uint _creditCard);
     event queryDelivery(uint _deliveryAddress, uint _quantity, uint _totalWeight);
     event querySupplier(uint _quantity, uint _itemID, string header);
 
     function main(){
-        string header = "_quantity, queryManufacturer, queryPaymentHomomorphic, queryDeliveryHomomorphic, querySupplier, queryDelivery, _itemID, queryManufacturer, querySupplier, _creditCard, queryPayment, _deliveryAddress, queryDelivery";
+        string memory header = "_quantity, queryManufacturer, queryPaymentHomomorphic, queryDeliveryHomomorphic, querySupplier, queryDelivery, _itemID, queryManufacturer, querySupplier, _creditCard, queryPayment, _deliveryAddress, queryDelivery";
         queryBuyerGUI(header);
     }
 
@@ -63,7 +63,7 @@ contract Contract {
         string memory itemIDqueryManufacturersubstring = substring(itemIDqueryManufacturerstring, 77, 0);
         itemIDqueryManufacturer = parseInt(itemIDqueryManufacturersubstring);
 
-        string header = "_availability, _price, queryPaymentHomomorphic, _weight, queryDeliveryHomomorphic";
+        string memory header = "_price, queryPaymentHomomorphic, _weight, queryDeliveryHomomorphic";
         queryManufacturer(quantityqueryManufacturer, itemIDqueryManufacturer, header);
     }
 
@@ -77,10 +77,9 @@ contract Contract {
             string memory _weightqueryDeliveryHomomorphic0substring = substring(_weightqueryDeliveryHomomorphic0string, 77, 0);
             _weightqueryDeliveryHomomorphic0 = parseInt(_weightqueryDeliveryHomomorphic0substring);
             totalWeight = quantityqueryDeliveryHomomorphic0 * _weightqueryDeliveryHomomorphic0;
-            string header = "";
-            queryPayment(totalPrice, creditCardqueryPayment, header);
+            queryPayment(totalPrice, creditCardqueryPayment);
         } else {
-            string header = "_supplierPrice, queryPaymentHomomorphic";
+            string memory header = "_supplierPrice, queryPaymentHomomorphic";
             querySupplier(quantityquerySupplier, itemIDquerySupplier, header);
         }
     }
@@ -90,7 +89,7 @@ contract Contract {
         string memory _supplierPricequeryPaymentHomomorphic0substring = substring(_supplierPricequeryPaymentHomomorphic0string, 77, 0);
         _supplierPricequeryPaymentHomomorphic0 = parseInt(_supplierPricequeryPaymentHomomorphic0substring);
         totalPriceSupplier = totalPrice + _supplierPricequeryPaymentHomomorphic0;
-        queryPayment(totalPriceSupplier, creditCardqueryPayment, header);
+        queryPayment(totalPriceSupplier, creditCardqueryPayment);
     }
 
     function _callbackPayment() onlyFromTinyOracle external {

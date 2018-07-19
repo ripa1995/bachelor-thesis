@@ -184,7 +184,7 @@ public class ConfidentialSC {
         for(String queryName:queryList.keySet()){
             QueryDetails queryDetails = queryList.get(queryName);
             String headerVarInit = getHeaderVarInit(queryName);
-            if (headerVarInit != null) {
+            if (!headerVarInit.equals("string memory header = \"\";")) {
                 //modifico la linea in cui viene dichiarata aggiungendo il parametro Header
                 int decLine = queryDetails.getDecLine();
                 String declaration = linesSC.get(decLine);
@@ -453,31 +453,49 @@ public class ConfidentialSC {
         Header header;
         ArrayList<String> encHeader;
         String newVar = "string memory header = \"";
-        ArrayList<Header> headerVar = headers.get(queryName);
+        int lenght = newVar.length();
+        ArrayList<Header> headerVar = null;
+        for(String key:headers.keySet()) {
+            if (queryName.contains(key)) {
+                headerVar = headers.get(key);
+                break;
+            }
+        }
         if (headerVar == null) {
-            return null;
+            return "string memory header = \"\";";
         }
         int last = headerVar.size()-1;
         for (int i = 0; i< last; i++) {
             header = headerVar.get(i);
-            newVar = newVar + header.getVarName() + ", ";
             encHeader = header.getEnc();
-            for (String anEncHeader : encHeader) {
-                newVar = newVar + anEncHeader + ", ";
+            if (encHeader.size()!=0) {
+                newVar = newVar + header.getVarName() + ", ";
+
+                for (String anEncHeader : encHeader) {
+                    newVar = newVar + anEncHeader + ", ";
+                }
             }
         }
         header = headerVar.get(last);
-        newVar = newVar + header.getVarName();
         encHeader = header.getEnc();
-        if (encHeader.size()==0) {
-            newVar = newVar + "\";";
-        } else {
-            newVar = newVar + ", ";
-            last = encHeader.size() - 1;
-            for (int j = 0; j < last; j++) {
-                newVar = newVar + encHeader.get(j) + ", ";
+        if (encHeader.size()!=0) {
+            newVar = newVar + header.getVarName();
+            if (encHeader.size() == 0) {
+                newVar = newVar + "\";";
+            } else {
+                newVar = newVar + ", ";
+                last = encHeader.size() - 1;
+                for (int j = 0; j < last; j++) {
+                    newVar = newVar + encHeader.get(j) + ", ";
+                }
+                newVar = newVar + encHeader.get(last) + "\";";
             }
-            newVar = newVar + encHeader.get(last) + "\";";
+        } else {
+            if (newVar.length()!=lenght) {
+                newVar = newVar.substring(0, newVar.length()-2) + "\";";
+            } else {
+                newVar = newVar +"\";";
+            }
         }
         return newVar;
     }
@@ -522,6 +540,7 @@ public class ConfidentialSC {
         String[] functionArray = function.split("\\n");
         for (String s : functionArray) {
             linesSC.add(i, s);
+
             i++;
         }
     }

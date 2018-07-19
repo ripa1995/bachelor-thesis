@@ -136,7 +136,7 @@ public class SmartcontractDependencyParser {
                 invokedServices.putIfAbsent(methodName,i);
                 QueryDetails queryDetails = new QueryDetails();
                 queryDetails.setDecLine(i);
-                queryList.putIfAbsent(methodName.substring(5), queryDetails);
+                queryList.putIfAbsent(methodName, queryDetails);
                 continue;
             }
         }
@@ -189,7 +189,7 @@ public class SmartcontractDependencyParser {
             }
 
             if (Utils.isQueryCall(invokedServices, token)) {
-                String queryName = (Utils.extractMethodName(token[0])).substring(5);
+                String queryName = (Utils.extractMethodName(token[0]));
                 if (queryList.containsKey(queryName)) {
                     QueryDetails queryDetails = queryList.get(queryName);
                     queryDetails.addInvocationLine(i);
